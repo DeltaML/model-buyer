@@ -11,18 +11,15 @@ python:
 # It is important to avoid things like coverage, pep8 that are not required to run the app
 install:
   - pip install coverage coveralls
-  - pip install -r federated_trainer/requirements.txt
-  - pip install -r data_owner/requirements.txt
-  - pip install -r model_buyer/requirements.txt
+  - pip install -r requirements.txt
   
 
 # command to run tests 
 # This is the script that enables travis to run the tests
 # There are many ways to do dependeing on how you want travis to run and get you coverage
 script: true
-  - coverage run --source=. -m unittest discover -s data_owner/test/
-  - coverage run --source=. -m unittest discover -s federated_trainer/tests/
-  - pylint --output-format=text federated_trainer/src
+  - coverage run --source=. -m unittest discover -s model_buyer/test/
+  - pylint --output-format=text model_buyer
 
 
 
