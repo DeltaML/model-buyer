@@ -83,18 +83,6 @@ curl -v -H "Content-Type: application/json" -X GET "http://localhost:9090/predic
 curl -v -H "Content-Type: application/json" -X GET "http://localhost:9090/prediction"
 ```
 
-
-## Model buyer configuration
-
-``` python3
-
-config = {
-    'server_register_url': "http://cte_federated_trainer:8080/model",
-    'key_length': 1024,
-    'active_encryption': False
-}
-```
-
 ## Release History
 
 * 0.0.1
