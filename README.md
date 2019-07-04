@@ -95,8 +95,7 @@ config = {
 }
 ```
 
-### Configuration details
+## Release History
 
-- server_register_url: __TODO__
-- key_length: __TODO__
-- active_encryption: __TODO__
+* 0.0.1
+    * Work in progress
