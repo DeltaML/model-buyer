@@ -1,5 +1,12 @@
 # DeltaML - Model Buyer
 
+[![Build Status](https://travis-ci.com/DeltaML/data-owner.svg?branch=master)](https://travis-ci.com/DeltaML/data-owner)
+
+## Description
+
+Repository that contains a Model Buyer participant in Federated Learning framework.
+
+
 
 ## Installing
 
