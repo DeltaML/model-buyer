@@ -1,7 +1,9 @@
-from sqlalchemy import create_engine
-
+from sqlalchemy import create_engine, update
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
+
+from model_buyer.exceptions.exceptions import NoResultFoundException
 
 
 class Database:
@@ -24,6 +26,16 @@ class DbEntity(Database.base):
     __abstract__ = True
     data_base = None
 
+    def delete(self):
+        session = DbEntity.data_base.get_session()
+        current_db_sessions = session.object_session(self)
+        if current_db_sessions:
+            current_db_sessions.delete(self)
+            current_db_sessions.commit()
+        else:
+            session.delete(self)
+            session.commit()
+
     def save(self):
         session = DbEntity.data_base.get_session()
         current_db_sessions = session.object_session(self)
@@ -38,5 +50,20 @@ class DbEntity(Database.base):
     def query(cls, entity, filters, all=False):
         if not filters:
             return DbEntity.data_base.get_session().query(entity).all()
-        result = DbEntity.data_base.get_session().query(entity).filter_by(**filters)
-        return result.all() if all else result.first()
+        query_result = DbEntity.data_base.get_session().query(entity).filter_by(**filters)
+        result = query_result.all() if all else query_result.first()
+        if not result:
+            raise NoResultFoundException(filters)
+        return result
+
+    def update(self, entity, filters, update_data):
+        session = DbEntity.data_base.get_session()
+        current_db_sessions = session.object_session(self)
+        if current_db_sessions:
+            current_db_sessions.query(entity).filter_by(**filters).update(update_data,synchronize_session=False)
+            current_db_sessions.commit()
+        else:
+            session.query(entity).filter_by(**filters).update(update_data,synchronize_session=False)
+            session.commit()
+
+

@@ -6,3 +6,12 @@ class OrderedModelNotFoundException(Exception):
 
         # Now for your custom code...
         self.status_code = status_code
+
+
+class NoResultFoundException(Exception):
+    def __init__(self, filters, status_code=404):
+        message = "Resource not found with filters {}".format(filters)
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+        # Now for your custom code...
+        self.status_code = status_code
