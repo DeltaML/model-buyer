@@ -8,8 +8,13 @@ from model_buyer.services.user_service import UserService
 api = Namespace('users', description='Users related operations')
 
 
+user_google_token_req = api.model(name='User', model={
+    'token': fields.String(required=True, description='Google login token')
+})
+
 user_data = api.model(name='User', model={
     'id': fields.String(required=True, description='The user identifier'),
+    'external_id': fields.String(required=True, description='The user identifier'),
     'name': fields.String(required=True, description='The user name'),
     'email': fields.String(required=True, description='The user email'),
     'token': fields.String(required=True, description='The user token')
@@ -53,3 +58,15 @@ class UserResource(Resource):
     @api.doc('delete_user')
     def delete(self, user_id):
         return UserService().delete(user_id), 200
+
+
+@api.route('/login', endpoint='users_login_resources_ep')
+class UserLoginResources(Resource):
+
+    @api.expect(user_google_token_req)
+    @api.marshal_with(user_data, code=201)
+    @api.doc('Login user')
+    def post(self):
+        logging.info("Login user")
+        data = request.get_json()
+        return UserService().login(data), 200

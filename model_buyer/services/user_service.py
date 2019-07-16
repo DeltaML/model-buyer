@@ -1,8 +1,9 @@
+from model_buyer.exceptions.exceptions import LoginFailureException
 from model_buyer.models.user import User
-from model_buyer.utils.singleton import Singleton
+from model_buyer.services.user_login_service import UserLoginService
 
 
-class UserService(metaclass=Singleton):
+class UserService:
 
     @staticmethod
     def create(user_data):
@@ -11,11 +12,11 @@ class UserService(metaclass=Singleton):
 
     @staticmethod
     def get_all():
-        return User.get()
+        return User.find_all()
 
     @staticmethod
     def get(user_id):
-        return User.get(user_id)
+        return User.find_one_by_id(user_id)
 
     @staticmethod
     def update(user_id, user_data):
@@ -24,4 +25,24 @@ class UserService(metaclass=Singleton):
     def delete(self, user_id):
         user = self.get(user_id)
         user.delete()
+
+    @staticmethod
+    def login(data):
+        token = data["token"]
+        if not UserLoginService.validate(token):
+            raise LoginFailureException()
+
+        user_info = UserLoginService.get_user_info(token)
+        user_external_id = user_info['sub']
+        if User.exists_external_id(user_external_id):
+            return user_info
+
+        if not user_info["email_verified"]:
+            raise LoginFailureException()
+
+        user = User(external_id=user_external_id,
+                    name=user_info["name"],
+                    email=user_info["email"],
+                    token=token)
+        user.save()
 

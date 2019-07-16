@@ -26,6 +26,10 @@ class DbEntity(Database.base):
     __abstract__ = True
     data_base = None
 
+    @classmethod
+    def exists(cls, entity, filters):
+        return cls.find(entity, filters)
+
     def delete(self):
         session = DbEntity.data_base.get_session()
         current_db_sessions = session.object_session(self)
@@ -46,16 +50,6 @@ class DbEntity(Database.base):
             session.add(self)
             session.commit()
 
-    @classmethod
-    def query(cls, entity, filters, all=False):
-        if not filters:
-            return DbEntity.data_base.get_session().query(entity).all()
-        query_result = DbEntity.data_base.get_session().query(entity).filter_by(**filters)
-        result = query_result.all() if all else query_result.first()
-        if not result:
-            raise NoResultFoundException(filters)
-        return result
-
     def update(self, entity, filters, update_data):
         session = DbEntity.data_base.get_session()
         current_db_sessions = session.object_session(self)
@@ -66,4 +60,9 @@ class DbEntity(Database.base):
             session.query(entity).filter_by(**filters).update(update_data,synchronize_session=False)
             session.commit()
 
-
+    @classmethod
+    def find(cls, entity, filters=None, all=False):
+        if not filters:
+            return DbEntity.data_base.get_session().query(entity).all()
+        query_result = DbEntity.data_base.get_session().query(entity).filter_by(**filters)
+        return query_result.all() if all else query_result.first()
