@@ -9,11 +9,10 @@ from flask_cors import CORS
 
 from commons.data.data_loader import DataLoader
 from commons.encryption.encryption_service import EncryptionService
-from model_buyer.service.data_base import Database
-from model_buyer.service.model_buyer import ModelBuyer
+from model_buyer.services.data_base import Database
+from model_buyer.services.model_buyer_service import ModelBuyerService
 from model_buyer.resources import api
 from model_buyer.config.logging_config import DEV_LOGGING_CONFIG, PROD_LOGGING_CONFIG
-
 
 UI_PATH = 'ui/build/'
 
@@ -48,8 +47,8 @@ public_key, private_key = encryption_service.generate_key_pair(app.config["KEY_L
 encryption_service.set_public_key(public_key.n)
 data_base = Database(app.config)
 data_loader = DataLoader(app.config['DATA_SETS_DIR'])
-model_buyer = ModelBuyer()
-model_buyer.init(encryption_service, data_loader, app.config)
+model_buyer_service = ModelBuyerService()
+model_buyer_service.init(encryption_service, data_loader, app.config)
 
 
 # Serve React App
@@ -65,7 +64,7 @@ def serve(path):
 @app.route('/transform', methods=['POST'])
 def transform_prediction():
     logging.info("transform prediction from data owner")
-    model_buyer.transform_prediction(request.get_json())
+    model_buyer_service.transform_prediction(request.get_json())
     return jsonify(200), 200
 
 
@@ -81,7 +80,7 @@ def load_data_set():
         flash('No selected file')
         return redirect(request.url)
     filename = secure_filename(file.filename)
-    model_buyer.load_data_set(file, filename)
+    model_buyer_service.load_data_set(file, filename)
     return jsonify(200)
 
 

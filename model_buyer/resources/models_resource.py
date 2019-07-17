@@ -1,9 +1,8 @@
 import logging
 import json
-from flask_restplus import Resource, Namespace, fields, reqparse
+from flask_restplus import Resource, Namespace, fields
 from flask import request, flash, redirect
-from werkzeug.utils import secure_filename
-from model_buyer.service.model_buyer import ModelBuyer
+from model_buyer.services.model_buyer_service import ModelBuyerService
 
 api = Namespace('models', description='Model related operations')
 
@@ -48,15 +47,8 @@ model_request = api.model(name='Ordered Model Request', model={
     'initial_model': fields.Raw(required=False, description='The model type')
 })
 
-model_buyer = ModelBuyer()
+model_buyer_service = ModelBuyerService()
 
-parser = reqparse.RequestParser()
-parser.add_argument('name', type=int, location='form')
-"""
-upload_parser = api.parser()
-upload_parser.add_argument('file', location='files',
-                           type=FileStorage, required=True)
-"""
 
 @api.route('', endpoint='model_resources_ep')
 class ModelResources(Resource):
@@ -76,11 +68,11 @@ class ModelResources(Resource):
         logging.info("New order model")
         data = json.loads(request.form.get("model"))
         file = self._load_file(request.files)
-        return model_buyer.make_new_order_model(data, file), 200
+        return model_buyer_service.make_new_order_model(data, file), 200
 
     @api.marshal_list_with(ordered_model)
     def get(self):
-        return model_buyer.get_all(), 200
+        return model_buyer_service.get_all(), 200
 
 
 @api.route('/<model_id>', endpoint='model_ep')
@@ -92,15 +84,15 @@ class ModelResource(Resource):
     @api.marshal_with(ordered_model)
     def put(self, model_id):
         data = request.get_json()
-        return model_buyer.finish_model(model_id, data), 200
+        return model_buyer_service.finish_model(model_id, data), 200
 
     @api.doc('patch_model')
     @api.marshal_with(ordered_model)
     def patch(self, model_id):
         data = request.get_json()
-        return model_buyer.update_model(model_id, data), 200
+        return model_buyer_service.update_model(model_id, data), 200
 
     @api.doc('get_model')
     @api.marshal_with(ordered_model)
     def get(self, model_id):
-        return model_buyer.get(model_id), 200
+        return model_buyer_service.get(model_id), 200

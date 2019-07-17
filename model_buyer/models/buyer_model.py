@@ -7,7 +7,7 @@ from flask import json
 from sqlalchemy import Column, String, Sequence, JSON
 
 from commons.model.model_service import ModelFactory
-from model_buyer.service.data_base import DbEntity
+from model_buyer.services.data_base import DbEntity
 
 
 class BuyerModelStatus(Enum):
