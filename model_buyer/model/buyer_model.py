@@ -4,7 +4,7 @@ from enum import Enum
 import numpy as np
 import sqlalchemy.types as types
 from flask import json
-from sqlalchemy import Column, String, Sequence, JSON
+from sqlalchemy import Column, String, Sequence, JSON, Float, Integer
 
 from commons.model.model_service import ModelFactory
 from model_buyer.service.data_base import DbEntity
@@ -47,6 +47,10 @@ class BuyerModel(DbEntity):
     model = Column(ModelColumn())
     request_data = Column(JSON)
     status = Column(String(50), default=BuyerModelStatus.INITIATED.name)
+    improvement = Column(Float)
+    cost = Column(Float)
+    name = Column(String(100))
+    iterations = Column(Integer)
 
     def __init__(self, model_type, data):
         self.id = str(uuid.uuid1())
@@ -57,8 +61,6 @@ class BuyerModel(DbEntity):
         self.model.set_weights(weights)
 
     def predict(self, x, y):
-        x_array = np.asarray(x)
-        y_array = np.asarray(y)
         return self.model.predict(x, y)
 
     @classmethod
