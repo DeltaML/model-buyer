@@ -7,12 +7,12 @@ import numpy as np
 
 from commons.model.model_service import ModelFactory
 from model_buyer.exceptions.exceptions import OrderedModelNotFoundException
-from model_buyer.model.buyer_model import BuyerModel, BuyerModelStatus
-from model_buyer.service.federated_trainer_connector import FederatedTrainerConnector
+from model_buyer.models.buyer_model import BuyerModel, BuyerModelStatus
+from model_buyer.services.federated_trainer_connector import FederatedTrainerConnector
 from model_buyer.utils.singleton import Singleton
 
 
-class ModelBuyer(metaclass=Singleton):
+class ModelBuyerService(metaclass=Singleton):
 
     def __init__(self):
         self.id = str(uuid.uuid1())

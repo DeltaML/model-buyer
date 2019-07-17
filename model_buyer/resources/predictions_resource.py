@@ -1,7 +1,7 @@
 import logging
 from flask import request
 from flask_restplus import Resource, Namespace, fields
-from model_buyer.service.model_buyer import ModelBuyer
+from model_buyer.services.model_buyer_service import ModelBuyerService
 
 
 api = Namespace('predictions', description='Predictions related operations')
@@ -20,7 +20,7 @@ prediction_request = api.model(name='Prediction ', model={
 })
 
 
-model_buyer = ModelBuyer()
+model_buyer = ModelBuyerService()
 
 
 @api.route('', endpoint='predictions')

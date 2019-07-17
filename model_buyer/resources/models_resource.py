@@ -1,9 +1,8 @@
 import logging
 import json
-from flask_restplus import Resource, Namespace, fields, reqparse
+from flask_restplus import Resource, Namespace, fields
 from flask import request, flash, redirect
-from werkzeug.utils import secure_filename
-from model_buyer.service.model_buyer import ModelBuyer
+from model_buyer.services.model_buyer_service import ModelBuyerService
 
 api = Namespace('models', description='Model related operations')
 
@@ -76,11 +75,11 @@ class ModelResources(Resource):
         logging.info("New order model")
         data = json.loads(request.form.get("model"))
         file = self._load_file(request.files)
-        return ModelBuyer().make_new_order_model(data, file), 200
+        return ModelBuyerService().make_new_order_model(data, file), 200
 
     @api.marshal_list_with(reduced_ordered_model)
     def get(self):
-        return ModelBuyer().get_all(), 200
+        return ModelBuyerService().get_all(), 200
 
 
 @api.route('/<model_id>', endpoint='model_ep')
@@ -92,15 +91,15 @@ class ModelResource(Resource):
     @api.marshal_with(ordered_model)
     def put(self, model_id):
         data = request.get_json()
-        return ModelBuyer().finish_model(model_id, data), 200
+        return ModelBuyerService().finish_model(model_id, data), 200
 
     @api.doc('patch_model')
     @api.marshal_with(ordered_model)
     def patch(self, model_id):
         data = request.get_json()
-        return ModelBuyer().update_model(model_id, data), 200
+        return ModelBuyerService().update_model(model_id, data), 200
 
     @api.doc('get_model')
     @api.marshal_with(ordered_model)
     def get(self, model_id):
-        return ModelBuyer().get(model_id), 200
+        return ModelBuyerService().get(model_id), 200

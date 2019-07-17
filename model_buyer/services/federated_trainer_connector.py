@@ -8,7 +8,7 @@ class FederatedTrainerConnector:
         self.federated_trainer_host = config['FEDERATED_TRAINER_HOST']
 
     def send_model_order(self, data):
-        logging.info(self.federated_trainer_host)
+        logging.info("Send order model")
         server_register_url = self.federated_trainer_host + "/model"
         response = requests.post(server_register_url, json=data)
         response.raise_for_status()
