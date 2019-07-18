@@ -35,8 +35,9 @@ class UserService:
             raise LoginFailureException()
 
         user_external_id = user_info['sub']
-        if User.exists_external_id(user_external_id):
-            return user_info
+        user = User.find_one_by_external_id(user_external_id)
+        if user:
+            return user
 
         if not user_info["email_verified"]:
             raise LoginFailureException()
