@@ -29,10 +29,11 @@ class UserService:
     @staticmethod
     def login(data):
         token = data["token"]
-        if not UserLoginService.validate(token):
+        user_info = UserLoginService.get_user_info(token)
+
+        if not UserLoginService.validate(user_info):
             raise LoginFailureException()
 
-        user_info = UserLoginService.get_user_info(token)
         user_external_id = user_info['sub']
         if User.exists_external_id(user_external_id):
             return user_info
@@ -45,4 +46,4 @@ class UserService:
                     email=user_info["email"],
                     token=token)
         user.save()
-
+        return user

@@ -3,6 +3,7 @@ import logging
 from flask_restplus import Resource, Namespace, fields
 from flask import request
 
+from model_buyer.resources.models_resource import reduced_ordered_model
 from model_buyer.services.user_service import UserService
 
 api = Namespace('users', description='Users related operations')
@@ -17,7 +18,8 @@ user_data = api.model(name='User', model={
     'external_id': fields.String(required=True, description='The user identifier'),
     'name': fields.String(required=True, description='The user name'),
     'email': fields.String(required=True, description='The user email'),
-    'token': fields.String(required=True, description='The user token')
+    'token': fields.String(required=True, description='The user token'),
+    'models': fields.Nested(reduced_ordered_model, required=True, description='The user models')
 })
 
 
@@ -69,4 +71,6 @@ class UserLoginResources(Resource):
     def post(self):
         logging.info("Login user")
         data = request.get_json()
-        return UserService().login(data), 200
+        response = UserService().login(data)
+        logging.info(response)
+        return response, 200

@@ -47,7 +47,7 @@ model_request = api.model(name='Ordered Model Request', model={
     'initial_model': fields.Raw(required=False, description='The model type')
 })
 
-reduced_ordered_model= api.model(name='Models', model={
+reduced_ordered_model = api.model(name='Models', model={
     'id': fields.String(required=True, description='The model identifier'),
     'status': fields.String(required=True, description='The model status'),
     'name': fields.String(required=True, description='The model name'),
@@ -67,8 +67,6 @@ class ModelResources(Resource):
             return redirect(request.url)
         return request_file["file"]
 
-
-    #@api.expect(requirements, validate=True)
     @api.marshal_with(ordered_model, code=201)
     @api.doc('Create order model')
     def post(self):

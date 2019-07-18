@@ -7,7 +7,7 @@ import numpy as np
 
 from commons.model.model_service import ModelFactory
 from model_buyer.exceptions.exceptions import OrderedModelNotFoundException
-from model_buyer.models.buyer_model import BuyerModel, BuyerModelStatus
+from model_buyer.models.model import Model, BuyerModelStatus
 from model_buyer.services.federated_trainer_connector import FederatedTrainerConnector
 from model_buyer.utils.singleton import Singleton
 
@@ -30,7 +30,7 @@ class ModelBuyerService(metaclass=Singleton):
 
     @staticmethod
     def get_all():
-        return BuyerModel.get()
+        return Model.get()
 
     def make_new_order_model(self, requirements, file):
         """
@@ -47,7 +47,7 @@ class ModelBuyerService(metaclass=Singleton):
             self.load_data_set(file, file_name)
         self.data_loader.load_data(file_name)
         x_test, y_test = self.data_loader.get_sub_set()
-        ordered_model = BuyerModel(model_type=model_type, data=x_test)
+        ordered_model = Model(model_type=model_type, data=x_test)
         ordered_model.requirements = data_requirements
         ordered_model.request_data = dict(requirements=requirements,
                                           model_id=ordered_model.id,
@@ -92,7 +92,7 @@ class ModelBuyerService(metaclass=Singleton):
         return ordered_model
 
     def get(self, model_id):
-        return BuyerModel.get(model_id)
+        return Model.get(model_id)
 
     def make_prediction(self, data):
         """
