@@ -14,19 +14,16 @@ from model_buyer.services.model_buyer_service import ModelBuyerService
 from model_buyer.resources import api
 from model_buyer.config.logging_config import DEV_LOGGING_CONFIG, PROD_LOGGING_CONFIG
 
-UI_PATH = 'ui/build/'
-
 
 def create_app():
     # create and configure the app
-    flask_app = Flask(__name__, static_folder=UI_PATH)
+    flask_app = Flask(__name__)
     if 'ENV_PROD' in os.environ and os.environ['ENV_PROD']:
         flask_app.config.from_pyfile("config/prod/app_config.py")
         dictConfig(PROD_LOGGING_CONFIG)
     else:
         dictConfig(DEV_LOGGING_CONFIG)
         flask_app.config.from_pyfile("config/dev/app_config.py")
-
     # ensure the instance folder exists
     try:
         os.makedirs(flask_app.instance_path)
@@ -49,16 +46,6 @@ data_base = Database(app.config)
 data_loader = DataLoader(app.config['DATA_SETS_DIR'])
 model_buyer_service = ModelBuyerService()
 model_buyer_service.init(encryption_service, data_loader, app.config)
-
-
-# Serve React App
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    if path != "" and os.path.exists(app.static_folder + path):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
 
 
 @app.route('/transform', methods=['POST'])

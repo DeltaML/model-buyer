@@ -30,13 +30,13 @@ requirements = api.model(name='Requirements', model={
 })
 
 model = api.model(name='Model', model={
+    'id': fields.String(required=True, description='The model identifier'),
     'status': fields.String(required=True, description='The model status'),
     'type': fields.String(required=True, description='The model type'),
     'weights': fields.List(fields.Raw, required=True, description='The model weights')
 })
 
 ordered_model = api.model(name='Ordered Model', model={
-    'id': fields.String(required=True, description='The model identifier'),
     'requirements': fields.Nested(requirements, required=True, description='The model requirements'),
     'model': fields.Nested(model, required=True, description='The model')
 })
@@ -54,11 +54,11 @@ model_buyer_service = ModelBuyerService()
 class ModelResources(Resource):
 
     @staticmethod
-    def _load_file(request_file):
-        if 'file' not in request_file:
+    def _load_file(request_file, filename):
+        if filename not in request_file:
             flash('No file part')
             return redirect(request.url)
-        return request_file["file"]
+        return request_file[filename]
 
 
     #@api.expect(requirements, validate=True)
@@ -66,8 +66,8 @@ class ModelResources(Resource):
     @api.doc('Create order model')
     def post(self):
         logging.info("New order model")
-        data = json.loads(request.form.get("model"))
-        file = self._load_file(request.files)
+        data = json.loads(self._load_file(request.files, 'model').stream.read())
+        file = self._load_file(request.files, 'file')
         return model_buyer_service.make_new_order_model(data, file), 200
 
     @api.marshal_list_with(ordered_model)
