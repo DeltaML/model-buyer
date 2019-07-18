@@ -135,7 +135,7 @@ class ModelBuyerService(metaclass=Singleton):
             "prediction_id": prediction_data["prediction_id"]
         }
         Thread(target=self.federated_trainer_connector.send_transformed_prediction,
-               argrequis=prediction_transformed).start()
+               args=prediction_transformed).start()
 
     def load_data_set(self, file, filename):
         logging.info(file)
