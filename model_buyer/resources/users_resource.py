@@ -48,17 +48,19 @@ class UserResource(Resource):
     @api.expect(user_data)
     @api.marshal_with(user_data)
     def put(self, user_id):
-        logging.info("Update user")
+        logging.info("Update user {}".format(user_id))
         data = request.get_json()
         return UserService().update(user_id, data), 200
 
     @api.doc('get_user')
     @api.marshal_with(user_data)
     def get(self, user_id):
+        logging.info("Get user {}".format(user_id))
         return UserService().get(user_id), 200
 
     @api.doc('delete_user')
     def delete(self, user_id):
+        logging.info("Delete user {}".format(user_id))
         return UserService().delete(user_id), 200
 
 
