@@ -57,7 +57,9 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model.save()
 
         self.federated_trainer_connector.send_model_order(ordered_model.request_data)
-        return {"requirements": ordered_model.requirements,
+        logging.info(file_name)
+        logging.info(data_requirements)
+        return {"requirements": requirements,
                 "model": {"id": ordered_model.id,
                           "status": ordered_model.status,
                           "type": ordered_model.model_type,
@@ -100,12 +102,13 @@ class ModelBuyerService(metaclass=Singleton):
         :param data:
         :return:
         """
-        model_id = data["model_id"]
-        model = self.get(model_id)
+        prediction_id = data["id"]
+        model = self.get(prediction_id)
         if not model:
-            raise OrderedModelNotFoundException(model_id)
+            raise OrderedModelNotFoundException(prediction_id)
         # TODO: Check this x_test
         x_test, y_test = self.data_loader.get_sub_set()
+        logging.info(model.model)
         prediction = model.predict(x_test, y_test)
         prediction.model = model
         self.predictions.add(prediction)
@@ -132,7 +135,7 @@ class ModelBuyerService(metaclass=Singleton):
             "prediction_id": prediction_data["prediction_id"]
         }
         Thread(target=self.federated_trainer_connector.send_transformed_prediction,
-               args=prediction_transformed).start()
+               argrequis=prediction_transformed).start()
 
     def load_data_set(self, file, filename):
         logging.info(file)
