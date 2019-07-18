@@ -54,10 +54,10 @@ class DbEntity(Database.base):
         session = DbEntity.data_base.get_session()
         current_db_sessions = session.object_session(self)
         if current_db_sessions:
-            current_db_sessions.query(entity).filter_by(**filters).update(update_data,synchronize_session=False)
+            current_db_sessions.query(entity).filter_by(**filters).update(update_data, synchronize_session=False)
             current_db_sessions.commit()
         else:
-            session.query(entity).filter_by(**filters).update(update_data,synchronize_session=False)
+            session.query(entity).filter_by(**filters).update(update_data, synchronize_session=False)
             session.commit()
 
     @classmethod

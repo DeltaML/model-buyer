@@ -64,4 +64,4 @@ class BuyerModel(DbEntity):
     @classmethod
     def get(cls, model_id=None):
         filters = {'id': model_id} if model_id else None
-        return DbEntity.query(BuyerModel, filters)
+        return DbEntity.find(BuyerModel, filters)
