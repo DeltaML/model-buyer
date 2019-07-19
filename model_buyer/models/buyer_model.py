@@ -60,6 +60,7 @@ class BuyerModel(DbEntity):
         self.model_type = model_type
         self.model = ModelFactory.get_model(model_type)(data)
         self.model.type = model_type
+        self.status = BuyerModelStatus.INITIATED.name
 
     def set_weights(self, weights):
         self.model.set_weights(weights)

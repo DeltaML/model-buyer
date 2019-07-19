@@ -50,6 +50,7 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model = BuyerModel(model_type=model_type, data=x_test)
         ordered_model.requirements = data_requirements
         ordered_model.request_data = dict(requirements=requirements,
+                                          status=ordered_model.status,
                                           model_id=ordered_model.id,
                                           model_buyer_id=self.id,
                                           weights=ordered_model.model.weights.tolist(),
@@ -72,11 +73,16 @@ class ModelBuyerService(metaclass=Singleton):
         logging.info("Model status: {} weights {}".format(buyer_model.status, buyer_model.model["weights"]))
         self.federated_trainer_connector.send_decrypted_MSEs(self._build_response_with_MSEs(model_id, data))
 
+
+
+
+    def _decrypt_mse(self, encrypted_mse):
+        return self.encryption_service.get_deserialized_encrypted_value(encrypted_mse) if self.config["ACTIVE_ENCRYPTION"] else encrypted_mse
+
     def _build_response_with_MSEs(self, model_id, data):
-        decrypted_MSE = self.encryption_service.__get_deserialized_encrypted_value(data["mse"])
-        decrypted_partial_MSEs = [(data_owner, self.encryption_service.__get_deserialized_encrypted_value(partial_MSE))
-                                  for (data_owner, partial_MSE) in data["partialMSEs"]]
-        public_key = self.encryption_service.public_key
+        decrypted_MSE = self._decrypt_mse(data["mse"])
+        decrypted_partial_MSEs = dict([(data_owner, self._decrypt_mse(partial_mse)) for data_owner, partial_mse in data["partial_MSEs"].items()])
+        public_key = self.encryption_service.get_public_key()
         return model_id, decrypted_MSE, decrypted_partial_MSEs, public_key
 
     def update_model(self, model_id, data):
@@ -91,15 +97,18 @@ class ModelBuyerService(metaclass=Singleton):
     def _update_model(self, model_id, data, status):
         weights = self.encryption_service.decrypt_and_deserizalize_collection(
             self.encryption_service.get_private_key(),
-            data['model']
-        ) if self.config["ACTIVE_ENCRYPTION"] else data['model']
+            data["model"]["weights"]
+        ) if self.config["ACTIVE_ENCRYPTION"] else data["model"]["weights"]
         ordered_model = self.get(model_id)
         model = ordered_model.model
         model.set_weights(np.asarray(weights))
         ordered_model.model = model
         ordered_model.status = status
         ordered_model.save()
-        #self.federated_trainer_connector.send_decrypted_MSEs(self._build_response_with_MSEs(model_id, data))
+        model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data["metrics"])
+        logging.info("CONTRIBUTIONS: {}".format(
+            self.federated_trainer_connector.send_decrypted_MSEs(model_id, decrypted_MSE, decrypted_partial_MSEs, public_key))
+        )
         return ordered_model
 
     def get(self, model_id):
