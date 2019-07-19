@@ -63,13 +63,21 @@ class ModelBuyerService(metaclass=Singleton):
                 "model": {"id": ordered_model.id,
                           "status": ordered_model.status,
                           "type": ordered_model.model_type,
-                          "weights": ordered_model.model['weights']
+                          "weights": ordered_model.model.weights.tolist()
                           }
                 }
 
     def finish_model(self, model_id, data):
         buyer_model = self._update_model(model_id, data, BuyerModelStatus.FINISHED.name)
         logging.info("Model status: {} weights {}".format(buyer_model.status, buyer_model.model["weights"]))
+        self.federated_trainer_connector.send_decrypted_MSEs(self._build_response_with_MSEs(model_id, data))
+
+    def _build_response_with_MSEs(self, model_id, data):
+        decrypted_MSE = self.encryption_service.__get_deserialized_encrypted_value(data["mse"])
+        decrypted_partial_MSEs = [(data_owner, self.encryption_service.__get_deserialized_encrypted_value(partial_MSE))
+                                  for (data_owner, partial_MSE) in data["partialMSEs"]]
+        public_key = self.encryption_service.public_key
+        return model_id, decrypted_MSE, decrypted_partial_MSEs, public_key
 
     def update_model(self, model_id, data):
         """
@@ -86,11 +94,12 @@ class ModelBuyerService(metaclass=Singleton):
             data['model']
         ) if self.config["ACTIVE_ENCRYPTION"] else data['model']
         ordered_model = self.get(model_id)
-        model = ModelFactory.load_model(ordered_model.model_type, ordered_model.model)
+        model = ordered_model.model
         model.set_weights(np.asarray(weights))
         ordered_model.model = model
         ordered_model.status = status
         ordered_model.save()
+        #self.federated_trainer_connector.send_decrypted_MSEs(self._build_response_with_MSEs(model_id, data))
         return ordered_model
 
     def get(self, model_id):
