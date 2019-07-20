@@ -62,18 +62,20 @@ class ModelResources(Resource):
 
     @staticmethod
     def _load_file(request_file):
-        if 'file' not in request_file:
+        if 'testing_file' not in request_file:
             flash('No file part')
             return redirect(request.url)
-        return request_file["file"]
+        return request_file["testing_file"]
 
     @api.marshal_with(ordered_model, code=201)
     @api.doc('Create order model')
     def post(self):
         logging.info("New order model")
-        data = json.loads(request.form.get("model"))
+        model_type = request.form.get("model_type")
+        data_requirements = request.form.get("data_requirements")
+        payment_requirements = request.form.get("payment_requirements")
         file = self._load_file(request.files)
-        return ModelBuyerService().make_new_order_model(data, file), 200
+        return ModelBuyerService().make_new_order_model(model_type, data_requirements, file), 200
 
     @api.marshal_list_with(reduced_ordered_model)
     def get(self):
