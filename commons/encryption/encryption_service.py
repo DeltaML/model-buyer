@@ -105,3 +105,9 @@ class EncryptionService:
         :return:
         """
         return self.homomorphic_encryption.get_encrypted_number(self.public_key, value)
+
+    def get_deserialized_desencrypted_value(self, value):
+        return self.homomorphic_encryption.decrypt_value(
+            self.private_key,
+            self.homomorphic_encryption.get_encrypted_number(self.public_key, value)
+        )

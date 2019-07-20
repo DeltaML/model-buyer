@@ -73,11 +73,8 @@ class ModelBuyerService(metaclass=Singleton):
         logging.info("Model status: {} weights {}".format(buyer_model.status, buyer_model.model["weights"]))
         self.federated_trainer_connector.send_decrypted_MSEs(self._build_response_with_MSEs(model_id, data))
 
-
-
-
     def _decrypt_mse(self, encrypted_mse):
-        return self.encryption_service.get_deserialized_encrypted_value(encrypted_mse) if self.config["ACTIVE_ENCRYPTION"] else encrypted_mse
+        return self.encryption_service.get_deserialized_desencrypted_value(encrypted_mse) if self.config["ACTIVE_ENCRYPTION"] else encrypted_mse
 
     def _build_response_with_MSEs(self, model_id, data):
         decrypted_MSE = self._decrypt_mse(data["mse"])
@@ -104,11 +101,19 @@ class ModelBuyerService(metaclass=Singleton):
         model.set_weights(np.asarray(weights))
         ordered_model.model = model
         ordered_model.status = status
+        # TODO: TEMPORARY SOLUTION, ADD ANOTHER ENDPOINT FOR INITIAL MSE REQUEST
+        if data['first_update']:
+            ordered_model.initial_mse = self._decrypt_mse(data["metrics"]["initial_mse"])
+            logging.info("INITIAL MSE: {}".format(ordered_model.initial_mse))
+        else:
+            initial_mse = ordered_model.initial_mse
+            model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data["metrics"])
+            ordered_model.mse = decrypted_MSE
+            ordered_model.partial_MSEs = decrypted_partial_MSEs
+            logging.info("CONTRIBUTIONS: {}".format(
+                self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key))
+            )
         ordered_model.save()
-        model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data["metrics"])
-        logging.info("CONTRIBUTIONS: {}".format(
-            self.federated_trainer_connector.send_decrypted_MSEs(model_id, decrypted_MSE, decrypted_partial_MSEs, public_key))
-        )
         return ordered_model
 
     def get(self, model_id):

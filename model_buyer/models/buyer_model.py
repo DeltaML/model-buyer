@@ -53,6 +53,8 @@ class BuyerModel(DbEntity):
     model = Column(ModelColumn())
     request_data = Column(JSON)
     mse = Column(Float)
+    initial_mse = Column(Float)
+    partial_MSEs = Column(JSON)
     status = Column(String(50), default=BuyerModelStatus.INITIATED.name)
 
     def __init__(self, model_type, data):
