@@ -1,6 +1,7 @@
 from model_buyer.exceptions.exceptions import LoginFailureException
 from model_buyer.models.user import User
 from model_buyer.services.user_login_service import UserLoginService
+from model_buyer.utils.mocks import mock_models
 
 
 class UserService:
@@ -16,7 +17,9 @@ class UserService:
 
     @staticmethod
     def get(user_id):
-        return User.find_one_by_id(user_id)
+
+        user = User.find_one_by_id(user_id)
+        return user
 
     @staticmethod
     def update(user_id, user_data):

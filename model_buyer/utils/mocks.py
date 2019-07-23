@@ -1,7 +1,5 @@
 from model_buyer.models.model import Model
 
-
-@staticmethod
 def mock_models():
     model_1 = Model("LINEAR_REGRESSION", data=None)
     model_1.id = "1"
