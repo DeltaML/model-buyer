@@ -30,13 +30,13 @@ requirements = api.model(name='Requirements', model={
 })
 
 model = api.model(name='Model', model={
+    'id': fields.String(required=True, description='The model identifier'),
     'status': fields.String(required=True, description='The model status'),
     'type': fields.String(required=True, description='The model type'),
     'weights': fields.List(fields.Raw, required=True, description='The model weights')
 })
 
 ordered_model = api.model(name='Ordered Model', model={
-    'id': fields.String(required=True, description='The model identifier'),
     'requirements': fields.Nested(requirements, required=True, description='The model requirements'),
     'model': fields.Nested(model, required=True, description='The model')
 })

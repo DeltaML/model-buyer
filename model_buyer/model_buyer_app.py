@@ -25,7 +25,6 @@ def create_app():
     else:
         dictConfig(DEV_LOGGING_CONFIG)
         flask_app.config.from_pyfile("config/dev/app_config.py")
-
     # ensure the instance folder exists
     try:
         os.makedirs(flask_app.instance_path)
