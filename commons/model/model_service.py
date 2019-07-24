@@ -27,6 +27,6 @@ class ModelFactory:
     @classmethod
     def load_model(cls, model_type, model_data):
         if ModelType[model_type] == ModelType.LINEAR_REGRESSION:
-            return LinearRegression(X=np.asarray(model_data['x']), y=np.asarray(model_data['y']))
+            return LinearRegression(X=np.asarray(model_data['x']), y=np.asarray(model_data['y']), type=model_type)
         else:
             raise InvalidModelException(model_type)

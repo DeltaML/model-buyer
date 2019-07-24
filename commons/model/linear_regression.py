@@ -8,6 +8,8 @@ class LinearRegression(DeltaModel):
     where gradient can be passed in.
 
     """
+    def __init__(self, X=None, y=None, type=None):
+        super().__init__(X, y, type)
 
     def fit(self, n_iter, eta=0.01):
         """Linear regression for n_iter"""

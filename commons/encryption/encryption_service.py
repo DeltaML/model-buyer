@@ -72,7 +72,7 @@ class EncryptionService:
         :return:
         """
 
-        return [self.__get_serialized_encrypted_value(value) for value in self.encrypt_collection(collection)]
+        return [self.get_serialized_encrypted_value(value) for value in self.encrypt_collection(collection)]
 
     def get_serialized_collection(self, collection):
         """
@@ -80,7 +80,7 @@ class EncryptionService:
         :param collection:
         :return:
         """
-        return [self.__get_serialized_encrypted_value(value) for value in collection]
+        return [self.get_serialized_encrypted_value(value) for value in collection]
 
     def get_deserialized_collection(self, collection):
         """
@@ -88,9 +88,9 @@ class EncryptionService:
         :param collection:
         :return:
         """
-        return [self.__get_deserialized_encrypted_value(value) for value in collection]
+        return [self.get_deserialized_encrypted_value(value) for value in collection]
 
-    def __get_serialized_encrypted_value(self, value):
+    def get_serialized_encrypted_value(self, value):
         """
 
         :param value:
@@ -98,10 +98,16 @@ class EncryptionService:
         """
         return self.homomorphic_encryption.get_serialized_encrypted_number(value)
 
-    def __get_deserialized_encrypted_value(self, value):
+    def get_deserialized_encrypted_value(self, value):
         """
 
         :param value:
         :return:
         """
         return self.homomorphic_encryption.get_encrypted_number(self.public_key, value)
+
+    def get_deserialized_desencrypted_value(self, value):
+        return self.homomorphic_encryption.decrypt_value(
+            self.private_key,
+            self.homomorphic_encryption.get_encrypted_number(self.public_key, value)
+        )
