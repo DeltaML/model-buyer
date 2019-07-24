@@ -1,12 +1,12 @@
 import uuid
 from enum import Enum
-
+from flask import json
 import numpy as np
 import sqlalchemy.types as types
-from flask import json
-from sqlalchemy import Column, String, Sequence, JSON, Float
-
+from sqlalchemy import Column, String, Sequence, JSON, Float, Integer, ForeignKey
+from sqlalchemy.orm import relationship
 from commons.model.model_service import ModelFactory
+from model_buyer.models.user import User
 from model_buyer.services.data_base import DbEntity
 
 
@@ -45,8 +45,8 @@ class ModelColumn(types.UserDefinedType):
         return process
 
 
-class BuyerModel(DbEntity):
-    __tablename__ = 'buyer_model'
+class Model(DbEntity):
+    __tablename__ = 'models'
     id = Column(String(100), Sequence('buyer_model_id_seq'), primary_key=True)
     model_type = Column(String(50))
     requirements = Column(JSON)
@@ -56,6 +56,13 @@ class BuyerModel(DbEntity):
     initial_mse = Column(Float)
     partial_MSEs = Column(JSON)
     status = Column(String(50), default=BuyerModelStatus.INITIATED.name)
+    improvement = Column(Float)
+    cost = Column(Float)
+    name = Column(String(100))
+    iterations = Column(Integer)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    user = relationship("User", back_populates="models")
+    User.models = relationship("Model", back_populates="user")
 
     def __init__(self, model_type, data):
         self.id = str(uuid.uuid1())
@@ -77,4 +84,4 @@ class BuyerModel(DbEntity):
     @classmethod
     def get(cls, model_id=None):
         filters = {'id': model_id} if model_id else None
-        return DbEntity.find(BuyerModel, filters)
+        return DbEntity.find(Model, filters)

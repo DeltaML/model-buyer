@@ -62,32 +62,39 @@ model_request = api.model(name='Ordered Model Request', model={
     'initial_model': fields.Raw(required=False, description='The model type')
 })
 
-model_buyer_service = ModelBuyerService()
+reduced_ordered_model = api.model(name='Models', model={
+    'id': fields.String(required=True, description='The model identifier'),
+    'status': fields.String(required=True, description='The model status'),
+    'name': fields.String(required=True, description='The model name'),
+    'improvement': fields.Float(required=True, description='The model improvement'),
+    'cost': fields.Float(required=True, description='The model cost'),
+    'iterations': fields.Integer(required=True, description='Number of iterations')
+})
 
 
 @api.route('', endpoint='model_resources_ep')
 class ModelResources(Resource):
 
     @staticmethod
-    def _load_file(request_file, filename):
-        if filename not in request_file:
+    def _load_file(request_file):
+        if 'testing_file' not in request_file:
             flash('No file part')
             return redirect(request.url)
-        return request_file[filename]
+        return request_file["testing_file"]
 
-
-    #@api.expect(requirements, validate=True)
     @api.marshal_with(ordered_model, code=201)
     @api.doc('Create order model')
     def post(self):
         logging.info("New order model")
-        data = json.loads(self._load_file(request.files, 'model').stream.read())
-        file = self._load_file(request.files, 'file')
-        return model_buyer_service.make_new_order_model(data, file), 200
+        model_type = request.form.get("model_type")
+        data_requirements = request.form.get("data_requirements")
+        payment_requirements = request.form.get("payment_requirements")
+        file = self._load_file(request.files)
+        return ModelBuyerService().make_new_order_model(model_type, data_requirements, file), 200
 
-    @api.marshal_list_with(ordered_model)
+    @api.marshal_list_with(reduced_ordered_model)
     def get(self):
-        return model_buyer_service.get_all(), 200
+        return ModelBuyerService().get_all(), 200
 
 
 @api.route('/<model_id>', endpoint='model_ep')
@@ -100,18 +107,16 @@ class ModelResource(Resource):
     def put(self, model_id):
         data = request.get_json()
         logging.info("Received final update from fed. aggr. {}".format(data))
-        return model_buyer_service.finish_model(model_id, data), 200
+        return ModelBuyerService().finish_model(model_id, data), 200
 
     @api.doc('patch_model')
     #@api.marshal_with(updated_model)
     def patch(self, model_id):
         data = request.get_json()
         logging.info("Received update from fed. aggr. {}".format(data))
-        model_buyer_service.update_model(model_id, data)
-        return 200
+        return ModelBuyerService().update_model(model_id, data), 200
 
     @api.doc('get_model')
     @api.marshal_with(model)
     def get(self, model_id):
-        model_buyer_service.get(model_id)
-        return 200
+        return ModelBuyerService().get(model_id), 200

@@ -3,12 +3,18 @@ from model_buyer.services.data_base import DbEntity
 
 
 class User(DbEntity):
-    __tablename__ = 'user'
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True, autoincrement=True)
     external_id = Column(String(500), unique=True)
     email = Column(String(100), unique=True)
     name = Column(String(100))
     token = Column(String(100))
+
+    def __init__(self, external_id, email, name, token):
+        self.external_id = external_id
+        self.email = email
+        self.name = name
+        self.token = token
 
     @classmethod
     def exists_external_id(cls, external_id):

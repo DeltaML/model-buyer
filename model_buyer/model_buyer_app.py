@@ -15,6 +15,7 @@ from model_buyer.resources import api
 from model_buyer.config.logging_config import DEV_LOGGING_CONFIG, PROD_LOGGING_CONFIG
 
 
+
 def create_app():
     # create and configure the app
     flask_app = Flask(__name__)
