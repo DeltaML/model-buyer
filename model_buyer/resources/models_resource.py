@@ -29,6 +29,16 @@ requirements = api.model(name='Requirements', model={
     'data_requirements': fields.Nested(data_requirements, required=True, description='Data requirements')
 })
 
+partial_MSE = api.model(name='Metrics', model={
+    'data_owner': fields.String(required=True, description='The data owner removed from the training of this model to obtain the partial MSE'),
+    'partial_MSE': fields.Float(required=True, description='The MSE of model updated without the data owner'),
+})
+
+metrics = api.model(name='Metrics', model={
+    'mse': fields.Float(required=True, description='The MSE of the model'),
+    'partial_MSEs': fields.List(fields.Nested(partial_MSE), required=True, description='The MSE of models updated without one local trainer each'),
+})
+
 model = api.model(name='Model', model={
     'id': fields.String(required=True, description='The model identifier'),
     'status': fields.String(required=True, description='The model status'),
@@ -38,6 +48,11 @@ model = api.model(name='Model', model={
 
 ordered_model = api.model(name='Ordered Model', model={
     'requirements': fields.Nested(requirements, required=True, description='The model requirements'),
+    'model': fields.Nested(model, required=True, description='The model')
+})
+
+updated_model = api.model(name='Ordered Model', model={
+    'metrics': fields.Nested(metrics, required=True, description='The model requirements'),
     'model': fields.Nested(model, required=True, description='The model')
 })
 
@@ -81,18 +96,22 @@ class ModelResources(Resource):
 class ModelResource(Resource):
 
     @api.doc('put_model')
-    @api.marshal_with(ordered_model)
+    #@api.marshal_with(updated_model)
     def put(self, model_id):
         data = request.get_json()
+        logging.info("Received final update from fed. aggr. {}".format(data))
         return model_buyer_service.finish_model(model_id, data), 200
 
     @api.doc('patch_model')
-    @api.marshal_with(ordered_model)
+    #@api.marshal_with(updated_model)
     def patch(self, model_id):
         data = request.get_json()
-        return model_buyer_service.update_model(model_id, data), 200
+        logging.info("Received update from fed. aggr. {}".format(data))
+        model_buyer_service.update_model(model_id, data)
+        return 200
 
     @api.doc('get_model')
-    @api.marshal_with(ordered_model)
+    @api.marshal_with(model)
     def get(self, model_id):
-        return model_buyer_service.get(model_id), 200
+        model_buyer_service.get(model_id)
+        return 200

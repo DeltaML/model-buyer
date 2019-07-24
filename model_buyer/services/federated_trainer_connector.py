@@ -18,3 +18,16 @@ class FederatedTrainerConnector:
         logging.info("Send prediction")
         response = requests.post(server_register_url, json=prediction.get_data()).raise_for_status()
         return response.json()
+
+    def send_decrypted_MSEs(self, model_id, initial_mse, MSE, partial_MSEs, public_key):
+        server_register_url = self.federated_trainer_host + "/contributions"
+        logging.info("Send MSEs for calculating contributions")
+        response = requests.post(server_register_url,
+                                 json={"model_id": model_id,
+                                       'initial_MSE': initial_mse,
+                                       "MSE": MSE,
+                                       "partial_MSEs": partial_MSEs,
+                                       "public_key": public_key
+                                       }
+                                 )
+        return response.json()  # TODO: SHOW RESULT IN SCREEN (IMPROVENT AND CONTRIBUTIONS)

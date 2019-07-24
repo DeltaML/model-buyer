@@ -4,7 +4,7 @@ from enum import Enum
 import numpy as np
 import sqlalchemy.types as types
 from flask import json
-from sqlalchemy import Column, String, Sequence, JSON
+from sqlalchemy import Column, String, Sequence, JSON, Float
 
 from commons.model.model_service import ModelFactory
 from model_buyer.services.data_base import DbEntity
@@ -26,16 +26,22 @@ class ModelColumn(types.UserDefinedType):
             x = value.X.tolist() if value.X is not None else None
             y = value.y.tolist() if value.y is not None else None
             weights = value.weights.tolist() if value.y is not None else None
+            model_type = value.type
             return json.dumps({
-                'x': x, 'y': y, 'weights': weights
+                'x': x, 'y': y, 'weights': weights, 'type': model_type
             })
-
         return process
 
     def result_processor(self, dialect, coltype):
         def process(value):
-            return json.loads(value)
-
+            model_data = json.loads(value)
+            x = np.asarray(model_data['x'])
+            y = np.asarray(model_data['y'])
+            model_type = model_data['type']
+            weights = np.asarray(model_data['weights'])
+            model = ModelFactory.get_model(model_type)(x, y)
+            model.set_weights(weights)
+            return model
         return process
 
 
@@ -46,12 +52,17 @@ class BuyerModel(DbEntity):
     requirements = Column(JSON)
     model = Column(ModelColumn())
     request_data = Column(JSON)
+    mse = Column(Float)
+    initial_mse = Column(Float)
+    partial_MSEs = Column(JSON)
     status = Column(String(50), default=BuyerModelStatus.INITIATED.name)
 
     def __init__(self, model_type, data):
         self.id = str(uuid.uuid1())
         self.model_type = model_type
         self.model = ModelFactory.get_model(model_type)(data)
+        self.model.type = model_type
+        self.status = BuyerModelStatus.INITIATED.name
 
     def set_weights(self, weights):
         self.model.set_weights(weights)
@@ -59,7 +70,9 @@ class BuyerModel(DbEntity):
     def predict(self, x, y):
         x_array = np.asarray(x)
         y_array = np.asarray(y)
-        return self.model.predict(x, y)
+        prediction = self.model.predict(x, y)
+        self.mse = prediction.mse
+        return prediction
 
     @classmethod
     def get(cls, model_id=None):
