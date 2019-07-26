@@ -52,6 +52,7 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model.request_data = dict(requirements=requirements,
                                           status=ordered_model.status,
                                           model_id=ordered_model.id,
+                                          model_type=model_type,
                                           model_buyer_id=self.id,
                                           weights=ordered_model.model.weights.tolist(),
                                           test_data=[x_test.tolist(), y_test.tolist()])
