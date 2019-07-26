@@ -119,4 +119,4 @@ class ModelResource(Resource):
     @api.doc('get_model')
     @api.marshal_with(model)
     def get(self, model_id):
-        return ModelBuyerService().get(model_id), 200
+        return ModelBuyerService().get_model(model_id), 200

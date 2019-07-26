@@ -122,6 +122,11 @@ class ModelBuyerService(metaclass=Singleton):
     def get(self, model_id):
         return Model.get(model_id)
 
+    def get_model(self, model_id):
+        model = Model.get(model_id)
+        return {"id": model.id, "weights": model.model, "type": model.model.type, "status": model.status}
+
+
     def make_prediction(self, data):
         """
 
