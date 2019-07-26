@@ -11,6 +11,7 @@ WORKDIR /app
 COPY --from=build /root/.local /root/.local
 ADD /commons /app/commons
 ADD /model_buyer /app/model_buyer
+RUN mkdir -p /app/db
 ENV PATH=/root/.local/bin:$PAT
 ENV ENV_PROD=1
 EXPOSE 9090

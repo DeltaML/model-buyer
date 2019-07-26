@@ -47,7 +47,7 @@ class ModelBuyerService(metaclass=Singleton):
             self.load_data_set(file, file_name)
         self.data_loader.load_data(file_name)
         x_test, y_test = self.data_loader.get_sub_set()
-        ordered_model = BuyerModel(model_type=model_type, data=x_test)
+        ordered_model = BuyerModel(model_type=model_type, data=(x_test, y_test))
         ordered_model.requirements = data_requirements
         ordered_model.request_data = dict(requirements=requirements,
                                           status=ordered_model.status,
@@ -96,6 +96,7 @@ class ModelBuyerService(metaclass=Singleton):
             self.encryption_service.get_private_key(),
             data["model"]["weights"]
         ) if self.config["ACTIVE_ENCRYPTION"] else data["model"]["weights"]
+        logging.info("Updating model from fed. aggr. Weights: {}".format(weights))
         ordered_model = self.get(model_id)
         model = ordered_model.model
         model.set_weights(np.asarray(weights))
@@ -114,6 +115,7 @@ class ModelBuyerService(metaclass=Singleton):
                 self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key))
             )
         ordered_model.save()
+        ordered_model.update_model(model)
         return ordered_model
 
     def get(self, model_id):

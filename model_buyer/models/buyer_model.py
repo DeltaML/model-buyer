@@ -4,7 +4,7 @@ from enum import Enum
 import numpy as np
 import sqlalchemy.types as types
 from flask import json
-from sqlalchemy import Column, String, Sequence, JSON, Float
+from sqlalchemy import Column, String, Sequence, JSON, Float, ARRAY
 
 from commons.model.model_service import ModelFactory
 from model_buyer.services.data_base import DbEntity
@@ -60,7 +60,7 @@ class BuyerModel(DbEntity):
     def __init__(self, model_type, data):
         self.id = str(uuid.uuid1())
         self.model_type = model_type
-        self.model = ModelFactory.get_model(model_type)(data)
+        self.model = ModelFactory.get_model(model_type)(data[0], data[1])
         self.model.type = model_type
         self.status = BuyerModelStatus.INITIATED.name
 
@@ -78,3 +78,10 @@ class BuyerModel(DbEntity):
     def get(cls, model_id=None):
         filters = {'id': model_id} if model_id else None
         return DbEntity.find(BuyerModel, filters)
+
+    def update_model(self, model, model_id=None):
+        #filters = {'id': model_id} if model_id else None
+        self.model = model
+        self.data_base.get_session().merge(self)
+        self.data_base.get_session().flush()
+        self.data_base.get_session().commit()
