@@ -57,7 +57,7 @@ class ModelBuyerService(metaclass=Singleton):
 
         self.federated_trainer_connector.send_model_order(ordered_model.request_data)
         logging.info(file_name)
-        logging.info(data_requirements)
+        logging.info(requirements)
         return {"requirements": requirements,
                 "model": {"id": ordered_model.id,
                           "status": ordered_model.status,
