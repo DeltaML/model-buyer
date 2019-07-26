@@ -124,7 +124,7 @@ class ModelBuyerService(metaclass=Singleton):
 
     def get_model(self, model_id):
         model = Model.get(model_id)
-        return {"id": model.id, "weights": model.model, "type": model.model.type, "status": model.status}
+        return {"id": model.id, "weights": model.model.weights.tolist(), "type": model.model.type, "status": model.status}
 
 
     def make_prediction(self, data):
