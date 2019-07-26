@@ -1,6 +1,7 @@
 from model_buyer.exceptions.exceptions import LoginFailureException
 from model_buyer.models.user import User
 from model_buyer.services.user_login_service import UserLoginService
+from model_buyer.utils.mocks import mock_models
 
 
 class UserService:
@@ -16,7 +17,9 @@ class UserService:
 
     @staticmethod
     def get(user_id):
-        return User.find_one_by_id(user_id)
+
+        user = User.find_one_by_id(user_id)
+        return user
 
     @staticmethod
     def update(user_id, user_data):
@@ -29,13 +32,15 @@ class UserService:
     @staticmethod
     def login(data):
         token = data["token"]
-        if not UserLoginService.validate(token):
+        user_info = UserLoginService.get_user_info(token)
+
+        if not UserLoginService.validate(user_info):
             raise LoginFailureException()
 
-        user_info = UserLoginService.get_user_info(token)
         user_external_id = user_info['sub']
-        if User.exists_external_id(user_external_id):
-            return user_info
+        user = User.find_one_by_external_id(user_external_id)
+        if user:
+            return user
 
         if not user_info["email_verified"]:
             raise LoginFailureException()
@@ -45,4 +50,4 @@ class UserService:
                     email=user_info["email"],
                     token=token)
         user.save()
-
+        return user

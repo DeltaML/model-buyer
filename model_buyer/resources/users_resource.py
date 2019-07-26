@@ -3,6 +3,7 @@ import logging
 from flask_restplus import Resource, Namespace, fields
 from flask import request
 
+from model_buyer.resources.models_resource import reduced_ordered_model
 from model_buyer.services.user_service import UserService
 
 api = Namespace('users', description='Users related operations')
@@ -17,7 +18,8 @@ user_data = api.model(name='User', model={
     'external_id': fields.String(required=True, description='The user identifier'),
     'name': fields.String(required=True, description='The user name'),
     'email': fields.String(required=True, description='The user email'),
-    'token': fields.String(required=True, description='The user token')
+    'token': fields.String(required=True, description='The user token'),
+    'models': fields.Nested(reduced_ordered_model, required=True, description='The user models')
 })
 
 
@@ -46,17 +48,19 @@ class UserResource(Resource):
     @api.expect(user_data)
     @api.marshal_with(user_data)
     def put(self, user_id):
-        logging.info("Update user")
+        logging.info("Update user {}".format(user_id))
         data = request.get_json()
         return UserService().update(user_id, data), 200
 
     @api.doc('get_user')
     @api.marshal_with(user_data)
     def get(self, user_id):
+        logging.info("Get user {}".format(user_id))
         return UserService().get(user_id), 200
 
     @api.doc('delete_user')
     def delete(self, user_id):
+        logging.info("Delete user {}".format(user_id))
         return UserService().delete(user_id), 200
 
 
@@ -69,4 +73,6 @@ class UserLoginResources(Resource):
     def post(self):
         logging.info("Login user")
         data = request.get_json()
-        return UserService().login(data), 200
+        response = UserService().login(data)
+        logging.info(response)
+        return response, 200

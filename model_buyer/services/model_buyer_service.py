@@ -7,7 +7,7 @@ import numpy as np
 
 from commons.model.model_service import ModelFactory
 from model_buyer.exceptions.exceptions import OrderedModelNotFoundException
-from model_buyer.models.buyer_model import BuyerModel, BuyerModelStatus
+from model_buyer.models.model import Model, BuyerModelStatus
 from model_buyer.services.federated_trainer_connector import FederatedTrainerConnector
 from model_buyer.utils.singleton import Singleton
 
@@ -19,20 +19,22 @@ class ModelBuyerService(metaclass=Singleton):
         self.encryption_service = None
         self.data_loader = None
         self.config = None
+        self.predictions = []
         self.federated_trainer_connector = None
 
     def init(self, encryption_service, data_loader, config):
         self.encryption_service = encryption_service
         self.data_loader = data_loader
         self.config = config
+        self.predictions = []
         if config:
             self.federated_trainer_connector = FederatedTrainerConnector(config)
 
     @staticmethod
     def get_all():
-        return BuyerModel.get()
+        return Model.get()
 
-    def make_new_order_model(self, requirements, file):
+    def make_new_order_model(self, model_type, requirements, file):
         """
 
         :param file_name:
@@ -40,15 +42,13 @@ class ModelBuyerService(metaclass=Singleton):
         :param requirements:
         :return:
         """
-        data_requirements = requirements["data_requirements"]
-        model_type = requirements["model_type"]
         file_name = file.filename
         if file and file_name:
             self.load_data_set(file, file_name)
         self.data_loader.load_data(file_name)
         x_test, y_test = self.data_loader.get_sub_set()
-        ordered_model = BuyerModel(model_type=model_type, data=(x_test, y_test))
-        ordered_model.requirements = data_requirements
+        ordered_model = Model(model_type=model_type, data=(x_test, y_test))
+        ordered_model.requirements = requirements
         ordered_model.request_data = dict(requirements=requirements,
                                           status=ordered_model.status,
                                           model_id=ordered_model.id,
@@ -59,7 +59,7 @@ class ModelBuyerService(metaclass=Singleton):
 
         self.federated_trainer_connector.send_model_order(ordered_model.request_data)
         logging.info(file_name)
-        logging.info(data_requirements)
+        logging.info(requirements)
         return {"requirements": requirements,
                 "model": {"id": ordered_model.id,
                           "status": ordered_model.status,
@@ -119,7 +119,7 @@ class ModelBuyerService(metaclass=Singleton):
         return ordered_model
 
     def get(self, model_id):
-        return BuyerModel.get(model_id)
+        return Model.get(model_id)
 
     def make_prediction(self, data):
         """
@@ -136,7 +136,7 @@ class ModelBuyerService(metaclass=Singleton):
         logging.info(model.model)
         prediction = model.predict(x_test, y_test)
         prediction.model = model
-        self.predictions.add(prediction)
+        self.predictions.append(prediction)
         return prediction
 
     def get_prediction(self, prediction_id):
