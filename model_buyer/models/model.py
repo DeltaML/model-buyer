@@ -65,7 +65,7 @@ class Model(DbEntity):
     user = relationship("User", back_populates="models")
     User.models = relationship("Model", back_populates="user")
 
-    def __init__(self, model_type, data):
+    def __init__(self, model_type, data, name="default"):
         self.id = str(uuid.uuid1())
         self.model_type = model_type
         self.model = ModelFactory.get_model(model_type)(data[0], data[1])
@@ -73,6 +73,9 @@ class Model(DbEntity):
         self.status = BuyerModelStatus.INITIATED.name
         self.iterations = 0
         self.improvement = 0
+        self.name = name
+        self.cost = 0.0
+
 
     def set_weights(self, weights):
         self.model.set_weights(weights)
@@ -91,8 +94,4 @@ class Model(DbEntity):
 
     def update_model(self, model, model_id=None):
         filters = {'id': model_id} if model_id else None
-        #self.model.set_weights(model.weights)
-        #self.data_base.get_session().merge(self)
-        #self.data_base.get_session().flush()
-        #self.data_base.get_session().commit()
         self.update(Model, filters, {Model.model: model})
