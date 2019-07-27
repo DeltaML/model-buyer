@@ -59,6 +59,7 @@ class Model(DbEntity):
     improvement = Column(Float)
     cost = Column(Float)
     name = Column(String(100))
+    contributions = Column(JSON)
     iterations = Column(Integer)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="models")
@@ -70,6 +71,8 @@ class Model(DbEntity):
         self.model = ModelFactory.get_model(model_type)(data[0], data[1])
         self.model.type = model_type
         self.status = BuyerModelStatus.INITIATED.name
+        self.iterations = 0
+        self.improvement = 0
 
     def set_weights(self, weights):
         self.model.set_weights(weights)

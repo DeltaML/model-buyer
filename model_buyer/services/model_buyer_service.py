@@ -112,9 +112,12 @@ class ModelBuyerService(metaclass=Singleton):
             model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data["metrics"])
             ordered_model.mse = decrypted_MSE
             ordered_model.partial_MSEs = decrypted_partial_MSEs
-            logging.info("CONTRIBUTIONS: {}".format(
-                self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key))
-            )
+            progress_update = self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key)
+            logging.info("CONTRIBUTIONS: {}".format(progress_update))
+            ordered_model.contributions = progress_update[2]
+            ordered_model.improvement = progress_update[1]
+            ordered_model.iterations += 1
+
         ordered_model.save()
         logging.info("Updating saved model. Weights: {}".format(model.weights))
         ordered_model.update_model(model, model_id)
