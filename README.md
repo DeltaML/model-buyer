@@ -1,6 +1,6 @@
 # DeltaML - Model Buyer
 
-[![Build Status](https://travis-ci.com/DeltaML/data-owner.svg?branch=master)](https://travis-ci.com/DeltaML/data-owner)
+[![Build Status](https://travis-ci.com/DeltaML/model-buyer.svg?branch=master)](https://travis-ci.com/DeltaML/model-buyer)
 
 ## Description
 
