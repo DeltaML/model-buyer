@@ -107,6 +107,7 @@ class ModelResource(Resource):
     def put(self, model_id):
         data = request.get_json()
         logging.info("Received final update from fed. aggr. {}".format(data))
+        ModelBuyerService().finish_model(model_id, data)
         return 200
 
     @api.doc('patch_model')
@@ -114,6 +115,7 @@ class ModelResource(Resource):
     def patch(self, model_id):
         data = request.get_json()
         logging.info("Received update from fed. aggr. {}".format(data))
+        ModelBuyerService().update_model(model_id, data)
         return 200
 
     @api.doc('get_model')

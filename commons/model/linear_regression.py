@@ -10,6 +10,7 @@ class LinearRegression(DeltaModel):
     """
     def __init__(self, X=None, y=None, type=None):
         super().__init__(X, y, type)
+        self.type = "LINEAR_REGRESSION"
 
     def fit(self, n_iter, eta=0.01):
         """Linear regression for n_iter"""

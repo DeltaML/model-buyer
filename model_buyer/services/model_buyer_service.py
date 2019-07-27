@@ -116,7 +116,8 @@ class ModelBuyerService(metaclass=Singleton):
                 self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key))
             )
         ordered_model.save()
-        ordered_model.update_model(model)
+        logging.info("Updating saved model. Weights: {}".format(model.weights))
+        ordered_model.update_model(model, model_id)
         return ordered_model
 
     def get(self, model_id):
@@ -124,7 +125,7 @@ class ModelBuyerService(metaclass=Singleton):
 
     def get_model(self, model_id):
         model = Model.get(model_id)
-        return {"id": model.id, "weights": model.model.weights.tolist(), "type": model.model.type, "status": model.status}
+        return {"id": model.id, "weights": model.model.weights.tolist(), "type": model.model_type, "status": model.status}
 
 
     def make_prediction(self, data):

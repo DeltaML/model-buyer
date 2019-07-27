@@ -87,8 +87,9 @@ class Model(DbEntity):
         return DbEntity.find(Model, filters)
 
     def update_model(self, model, model_id=None):
-        #filters = {'id': model_id} if model_id else None
-        self.model = model
-        self.data_base.get_session().merge(self)
-        self.data_base.get_session().flush()
-        self.data_base.get_session().commit()
+        filters = {'id': model_id} if model_id else None
+        #self.model.set_weights(model.weights)
+        #self.data_base.get_session().merge(self)
+        #self.data_base.get_session().flush()
+        #self.data_base.get_session().commit()
+        self.update(Model, filters, {Model.model: model})
