@@ -107,16 +107,18 @@ class ModelResource(Resource):
     def put(self, model_id):
         data = request.get_json()
         logging.info("Received final update from fed. aggr. {}".format(data))
-        return ModelBuyerService().finish_model(model_id, data), 200
+        ModelBuyerService().finish_model(model_id, data)
+        return 200
 
     @api.doc('patch_model')
     #@api.marshal_with(updated_model)
     def patch(self, model_id):
         data = request.get_json()
         logging.info("Received update from fed. aggr. {}".format(data))
-        return ModelBuyerService().update_model(model_id, data), 200
+        ModelBuyerService().update_model(model_id, data)
+        return 200
 
     @api.doc('get_model')
     @api.marshal_with(model)
     def get(self, model_id):
-        return ModelBuyerService().get(model_id), 200
+        return ModelBuyerService().get_model(model_id), 200

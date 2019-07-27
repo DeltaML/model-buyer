@@ -19,12 +19,14 @@ class ModelBuyerService(metaclass=Singleton):
         self.encryption_service = None
         self.data_loader = None
         self.config = None
+        self.predictions = []
         self.federated_trainer_connector = None
 
     def init(self, encryption_service, data_loader, config):
         self.encryption_service = encryption_service
         self.data_loader = data_loader
         self.config = config
+        self.predictions = []
         if config:
             self.federated_trainer_connector = FederatedTrainerConnector(config)
 
@@ -45,11 +47,12 @@ class ModelBuyerService(metaclass=Singleton):
             self.load_data_set(file, file_name)
         self.data_loader.load_data(file_name)
         x_test, y_test = self.data_loader.get_sub_set()
-        ordered_model = Model(model_type=model_type, data=x_test)
+        ordered_model = Model(model_type=model_type, data=(x_test, y_test))
         ordered_model.requirements = requirements
         ordered_model.request_data = dict(requirements=requirements,
                                           status=ordered_model.status,
                                           model_id=ordered_model.id,
+                                          model_type=model_type,
                                           model_buyer_id=self.id,
                                           weights=ordered_model.model.weights.tolist(),
                                           test_data=[x_test.tolist(), y_test.tolist()])
@@ -94,6 +97,7 @@ class ModelBuyerService(metaclass=Singleton):
             self.encryption_service.get_private_key(),
             data["model"]["weights"]
         ) if self.config["ACTIVE_ENCRYPTION"] else data["model"]["weights"]
+        logging.info("Updating model from fed. aggr. Weights: {}".format(weights))
         ordered_model = self.get(model_id)
         model = ordered_model.model
         model.set_weights(np.asarray(weights))
@@ -108,14 +112,24 @@ class ModelBuyerService(metaclass=Singleton):
             model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data["metrics"])
             ordered_model.mse = decrypted_MSE
             ordered_model.partial_MSEs = decrypted_partial_MSEs
-            logging.info("CONTRIBUTIONS: {}".format(
-                self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key))
-            )
+            progress_update = self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key)
+            logging.info("CONTRIBUTIONS: {}".format(progress_update))
+            ordered_model.contributions = progress_update[2]
+            ordered_model.improvement = progress_update[1]
+            ordered_model.iterations += 1
+
         ordered_model.save()
+        logging.info("Updating saved model. Weights: {}".format(model.weights))
+        ordered_model.update_model(model, model_id)
         return ordered_model
 
     def get(self, model_id):
         return Model.get(model_id)
+
+    def get_model(self, model_id):
+        model = Model.get(model_id)
+        return {"id": model.id, "weights": model.model.weights.tolist(), "type": model.model_type, "status": model.status}
+
 
     def make_prediction(self, data):
         """
@@ -132,7 +146,7 @@ class ModelBuyerService(metaclass=Singleton):
         logging.info(model.model)
         prediction = model.predict(x_test, y_test)
         prediction.model = model
-        self.predictions.add(prediction)
+        self.predictions.append(prediction)
         return prediction
 
     def get_prediction(self, prediction_id):

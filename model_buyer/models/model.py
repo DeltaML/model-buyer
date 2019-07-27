@@ -3,7 +3,7 @@ from enum import Enum
 from flask import json
 import numpy as np
 import sqlalchemy.types as types
-from sqlalchemy import Column, String, Sequence, JSON, Float, Integer, ForeignKey
+from sqlalchemy import Column, String, Sequence, JSON, Float, Integer, ForeignKey, ARRAY
 from sqlalchemy.orm import relationship
 from commons.model.model_service import ModelFactory
 from model_buyer.models.user import User
@@ -59,17 +59,23 @@ class Model(DbEntity):
     improvement = Column(Float)
     cost = Column(Float)
     name = Column(String(100))
+    contributions = Column(JSON)
     iterations = Column(Integer)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="models")
     User.models = relationship("Model", back_populates="user")
 
-    def __init__(self, model_type, data):
+    def __init__(self, model_type, data, name="default"):
         self.id = str(uuid.uuid1())
         self.model_type = model_type
-        self.model = ModelFactory.get_model(model_type)(data)
+        self.model = ModelFactory.get_model(model_type)(data[0], data[1])
         self.model.type = model_type
         self.status = BuyerModelStatus.INITIATED.name
+        self.iterations = 0
+        self.improvement = 0
+        self.name = name
+        self.cost = 0.0
+
 
     def set_weights(self, weights):
         self.model.set_weights(weights)
@@ -85,3 +91,7 @@ class Model(DbEntity):
     def get(cls, model_id=None):
         filters = {'id': model_id} if model_id else None
         return DbEntity.find(Model, filters)
+
+    def update_model(self, model, model_id=None):
+        filters = {'id': model_id} if model_id else None
+        self.update(Model, filters, {Model.model: model})
