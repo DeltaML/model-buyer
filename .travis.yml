@@ -29,9 +29,15 @@ script: true
 # You can also use after_success
 after_success:
   - coveralls
-
+  -
 notifications:
   email:
     recipients:
       - $USER_1
       - $USER_2
+
+deploy:
+  provider: script
+  script: bash script/docker_push
+  on:
+    branch: master
