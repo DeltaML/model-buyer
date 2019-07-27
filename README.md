@@ -39,10 +39,10 @@ pip install -r model_buyer/requirements.txt
 	
 ### Using Docker
 
-Select _LOCAL_PORT_ number to run some containers
+
 ``` bash
-    docker build -t federated-learning-model-buyer --rm -f model_buyer/Dockerfile .
-    docker run --rm -it -p 9090:9090 federated-learning-model-buyer
+    docker image build --tag deltaml/model-buyer:latest .
+    docker run --rm -it -p 9090:9090 deltaml/model-buyer
 ``` 
 
 
@@ -59,14 +59,14 @@ curl -v -H "Content-Type: application/json" -X POST "http://localhost:9090/model
 ### Get make model 
 
 ``` bash
-curl -v -H "Content-Type: application/json" -X GET "http://localhost:9090/model/<model_id>"
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:9090/models/<model_id>"
 ```
 
 
 ### Get all make model 
 
 ``` bash
-curl -v -H "Content-Type: application/json" -X GET "http://localhost:9090/model"
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:9090/models"
 ```
 
 
