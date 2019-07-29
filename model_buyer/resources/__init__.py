@@ -2,7 +2,7 @@ import logging
 from flask import jsonify, make_response, abort
 from flask_restplus import Api
 
-from model_buyer.exceptions.exceptions import NoResultFoundException, LoginFailureException
+from model_buyer.exceptions.exceptions import NoResultFoundException, LoginFailureException, UserNotFoundException
 from model_buyer.resources.models_resource import api as model_api
 from model_buyer.resources.predictions_resource import api as predictions_api
 from model_buyer.resources.users_resource import api as users_api
@@ -33,6 +33,17 @@ def login_failure_handler(error):
 
 @api.errorhandler(NoResultFoundException)
 def not_found_error_handler(error):
+    """
+    Default error handler
+    :param error:
+    :return:
+    """
+    logging.error(error)
+    return {'message': str(error)}, 404
+
+
+@api.errorhandler(UserNotFoundException)
+def user_not_found_error_handler(error):
     """
     Default error handler
     :param error:
