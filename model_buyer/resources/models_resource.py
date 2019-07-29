@@ -87,10 +87,11 @@ class ModelResources(Resource):
     def post(self):
         logging.info("New order model")
         model_type = request.form.get("model_type")
+        user_id = request.form.get("user_id")
         data_requirements = request.form.get("data_requirements")
         payment_requirements = request.form.get("payment_requirements")
         file = self._load_file(request.files)
-        return ModelBuyerService().make_new_order_model(model_type, data_requirements, file), 200
+        return ModelBuyerService().make_new_order_model(model_type, data_requirements, file, user_id), 200
 
     @api.marshal_list_with(reduced_ordered_model)
     def get(self):
