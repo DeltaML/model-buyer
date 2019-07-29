@@ -34,14 +34,16 @@ class ModelBuyerService(metaclass=Singleton):
     def get_all():
         return Model.get()
 
-    def make_new_order_model(self, model_type, requirements, file):
+    def make_new_order_model(self, model_type, requirements, file, user_id):
         """
 
-        :param file_name:
-        :param file:
+        :param model_type:
         :param requirements:
+        :param file:
+        :param user_id:
         :return:
         """
+
         file_name = file.filename
         if file and file_name:
             self.load_data_set(file, file_name)
@@ -49,6 +51,7 @@ class ModelBuyerService(metaclass=Singleton):
         x_test, y_test = self.data_loader.get_sub_set()
         ordered_model = Model(model_type=model_type, data=(x_test, y_test))
         ordered_model.requirements = requirements
+        ordered_model.user_id = user_id
         ordered_model.request_data = dict(requirements=requirements,
                                           status=ordered_model.status,
                                           model_id=ordered_model.id,
