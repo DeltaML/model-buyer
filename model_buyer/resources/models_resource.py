@@ -51,7 +51,7 @@ ordered_model = api.model(name='Ordered Model', model={
     'model': fields.Nested(model, required=True, description='The model')
 })
 
-updated_model = api.model(name='Ordered Model', model={
+updated_model = api.model(name='Updated Model', model={
     'metrics': fields.Nested(metrics, required=True, description='The model requirements'),
     'model': fields.Nested(model, required=True, description='The model')
 })
