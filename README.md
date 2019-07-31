@@ -52,7 +52,12 @@ pip install -r model_buyer/requirements.txt
 ### Make model from federated trainer
 
 ``` bash
-curl -v -H "Content-Type: application/json" -X POST "http://localhost:9090/model" --data @examples/model.json
+curl \
+  -F "user_id=1" \
+  -F "model_type=LINEAR_REGRESSION" \
+  -F "data_requirements=@model_buyer/examples/model.json" \
+  -F "testing_file=@model_buyer/dataset/file_0.csv" \
+  http://localhost:9090/models
 ```
 
 
