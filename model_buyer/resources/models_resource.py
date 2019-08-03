@@ -35,6 +35,7 @@ partial_MSE = api.model(name='Metrics', model={
 })
 
 metrics = api.model(name='Metrics', model={
+    'initial_mse': fields.Float(required=True, description='The Initial MSE of the model'),
     'mse': fields.Float(required=True, description='The MSE of the model'),
     'partial_MSEs': fields.List(fields.Nested(partial_MSE), required=True, description='The MSE of models updated without one local trainer each'),
 })
@@ -43,7 +44,7 @@ model = api.model(name='Model', model={
     'id': fields.String(required=True, description='The model identifier'),
     'status': fields.String(required=True, description='The model status'),
     'type': fields.String(required=True, description='The model type'),
-    'weights': fields.List(fields.Raw, required=True, description='The model weights')
+    'weights': fields.List(fields.Raw, required=True, description='The model weights'),
 })
 
 ordered_model = api.model(name='Ordered Model', model={
@@ -66,7 +67,7 @@ reduced_ordered_model = api.model(name='Models', model={
     'id': fields.String(required=True, description='The model identifier'),
     'status': fields.String(required=True, description='The model status'),
     'name': fields.String(required=True, description='The model name'),
-    'improvement': fields.Float(required=True, description='The model improvement'),
+    'improvement': fields.Fixed(required=True, decimals=5, description='The model improvement'),
     'cost': fields.Float(required=True, description='The model cost'),
     'iterations': fields.Integer(required=True, description='Number of iterations')
 })
@@ -120,6 +121,6 @@ class ModelResource(Resource):
         return 200
 
     @api.doc('get_model')
-    @api.marshal_with(model)
+    @api.marshal_with(updated_model)
     def get(self, model_id):
         return ModelBuyerService().get_model(model_id), 200

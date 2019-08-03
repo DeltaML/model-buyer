@@ -78,11 +78,13 @@ class ModelBuyerService(metaclass=Singleton):
         self.federated_trainer_connector.send_decrypted_MSEs(self._build_response_with_MSEs(model_id, data))
 
     def _decrypt_mse(self, encrypted_mse):
-        return self.encryption_service.get_deserialized_desencrypted_value(encrypted_mse) if self.config["ACTIVE_ENCRYPTION"] else encrypted_mse
+        return self.encryption_service.get_deserialized_desencrypted_value(encrypted_mse) if self.config[
+            "ACTIVE_ENCRYPTION"] else encrypted_mse
 
     def _build_response_with_MSEs(self, model_id, data):
         decrypted_MSE = self._decrypt_mse(data["mse"])
-        decrypted_partial_MSEs = dict([(data_owner, self._decrypt_mse(partial_mse)) for data_owner, partial_mse in data["partial_MSEs"].items()])
+        decrypted_partial_MSEs = dict(
+            [(data_owner, self._decrypt_mse(partial_mse)) for data_owner, partial_mse in data["partial_MSEs"].items()])
         public_key = self.encryption_service.get_public_key()
         return model_id, decrypted_MSE, decrypted_partial_MSEs, public_key
 
@@ -112,10 +114,12 @@ class ModelBuyerService(metaclass=Singleton):
             logging.info("INITIAL MSE: {}".format(ordered_model.initial_mse))
         else:
             initial_mse = ordered_model.initial_mse
-            model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data["metrics"])
+            model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data[
+                "metrics"])
             ordered_model.mse = decrypted_MSE
             ordered_model.partial_MSEs = decrypted_partial_MSEs
-            progress_update = self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key)
+            progress_update = self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE,
+                                                                                   decrypted_partial_MSEs, public_key)
             logging.info("CONTRIBUTIONS: {}".format(progress_update))
             ordered_model.contributions = progress_update[2]
             ordered_model.improvement = progress_update[1]
@@ -131,8 +135,11 @@ class ModelBuyerService(metaclass=Singleton):
 
     def get_model(self, model_id):
         model = Model.get(model_id)
-        return {"id": model.id, "weights": model.model.weights.tolist(), "type": model.model_type, "status": model.status}
-
+        return {
+            "model": {"id": model.id, "weights": model.model.weights.tolist(), "type": model.model_type,
+                      "status": model.status},
+            "metrics": {"mse": model.mse, "partial_MSEs": model.partial_MSEs, "initial_mse": model.initial_mse}
+        }
 
     def make_prediction(self, data):
         """
@@ -179,4 +186,3 @@ class ModelBuyerService(metaclass=Singleton):
         logging.info(file)
         file.save(os.path.join(self.config.get("DATA_SETS_DIR"), filename))
         file.close()
-
