@@ -29,12 +29,13 @@ requirements = api.model(name='Requirements', model={
     'data_requirements': fields.Nested(data_requirements, required=True, description='Data requirements')
 })
 
-partial_MSE = api.model(name='Metrics', model={
+partial_MSE = api.model(name='Partial MSE Metrics', model={
     'data_owner': fields.String(required=True, description='The data owner removed from the training of this model to obtain the partial MSE'),
     'partial_MSE': fields.Float(required=True, description='The MSE of model updated without the data owner'),
 })
 
 metrics = api.model(name='Metrics', model={
+    'initial_mse': fields.Float(required=True, description='The Initial MSE of the model'),
     'mse': fields.Float(required=True, description='The MSE of the model'),
     'partial_MSEs': fields.List(fields.Nested(partial_MSE), required=True, description='The MSE of models updated without one local trainer each'),
 })
@@ -43,7 +44,7 @@ model = api.model(name='Model', model={
     'id': fields.String(required=True, description='The model identifier'),
     'status': fields.String(required=True, description='The model status'),
     'type': fields.String(required=True, description='The model type'),
-    'weights': fields.List(fields.Raw, required=True, description='The model weights')
+    'weights': fields.List(fields.Raw, required=True, description='The model weights'),
 })
 
 ordered_model = api.model(name='Ordered Model', model={
@@ -66,7 +67,7 @@ reduced_ordered_model = api.model(name='Models', model={
     'id': fields.String(required=True, description='The model identifier'),
     'status': fields.String(required=True, description='The model status'),
     'name': fields.String(required=True, description='The model name'),
-    'improvement': fields.Float(required=True, description='The model improvement'),
+    'improvement': fields.Fixed(required=True, decimals=5, description='The model improvement'),
     'cost': fields.Float(required=True, description='The model cost'),
     'iterations': fields.Integer(required=True, description='Number of iterations')
 })
@@ -120,6 +121,6 @@ class ModelResource(Resource):
         return 200
 
     @api.doc('get_model')
-    @api.marshal_with(model)
+    @api.marshal_with(updated_model)
     def get(self, model_id):
         return ModelBuyerService().get_model(model_id), 200

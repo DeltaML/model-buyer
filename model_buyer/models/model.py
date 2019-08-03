@@ -68,6 +68,7 @@ class Model(DbEntity):
     def __init__(self, model_type, data, name="default"):
         self.id = str(uuid.uuid1())
         self.model_type = model_type
+        # TODO: revisar esto
         self.model = ModelFactory.get_model(model_type)(data[0], data[1])
         self.model.type = model_type
         self.status = BuyerModelStatus.INITIATED.name
@@ -75,7 +76,6 @@ class Model(DbEntity):
         self.improvement = 0
         self.name = name
         self.cost = 0.0
-
 
     def set_weights(self, weights):
         self.model.set_weights(weights)
