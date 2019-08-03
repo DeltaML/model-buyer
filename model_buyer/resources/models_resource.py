@@ -29,7 +29,7 @@ requirements = api.model(name='Requirements', model={
     'data_requirements': fields.Nested(data_requirements, required=True, description='Data requirements')
 })
 
-partial_MSE = api.model(name='Metrics', model={
+partial_MSE = api.model(name='Partial MSE Metrics', model={
     'data_owner': fields.String(required=True, description='The data owner removed from the training of this model to obtain the partial MSE'),
     'partial_MSE': fields.Float(required=True, description='The MSE of model updated without the data owner'),
 })

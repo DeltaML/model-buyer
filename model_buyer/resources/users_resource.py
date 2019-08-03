@@ -9,7 +9,7 @@ from model_buyer.services.user_service import UserService
 api = Namespace('users', description='Users related operations')
 
 
-user_google_token_req = api.model(name='User', model={
+user_google_token_req = api.model(name='User Google token', model={
     'token': fields.String(required=True, description='Google login token')
 })
 
