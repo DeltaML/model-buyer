@@ -105,7 +105,6 @@ class ModelResources(Resource):
 class ModelResource(Resource):
 
     @api.doc('put_model')
-    #@api.marshal_with(updated_model)
     def put(self, model_id):
         data = request.get_json()
         logging.info("Received final update from fed. aggr. {}".format(data))
@@ -113,7 +112,6 @@ class ModelResource(Resource):
         return 200
 
     @api.doc('patch_model')
-    #@api.marshal_with(updated_model)
     def patch(self, model_id):
         data = request.get_json()
         logging.info("Received update from fed. aggr. {}".format(data))
@@ -124,3 +122,7 @@ class ModelResource(Resource):
     @api.marshal_with(updated_model)
     def get(self, model_id):
         return ModelBuyerService().get_model(model_id), 200
+
+    @api.doc('delete_model')
+    def delete(self, model_id):
+        return ModelBuyerService().delete_model(model_id), 200

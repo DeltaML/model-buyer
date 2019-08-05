@@ -5,8 +5,7 @@ from threading import Thread
 
 import numpy as np
 
-from commons.model.model_service import ModelFactory
-from model_buyer.exceptions.exceptions import OrderedModelNotFoundException
+from model_buyer.exceptions.exceptions import  ModelNotFoundException
 from model_buyer.models.model import Model, BuyerModelStatus
 from model_buyer.services.federated_trainer_connector import FederatedTrainerConnector
 from model_buyer.utils.singleton import Singleton
@@ -33,6 +32,10 @@ class ModelBuyerService(metaclass=Singleton):
     @staticmethod
     def get_all():
         return Model.get()
+
+    @staticmethod
+    def delete_model(model_id):
+        ModelBuyerService.get(model_id).delete()
 
     def make_new_order_model(self, model_type, requirements, file, user_id):
         """
@@ -131,10 +134,15 @@ class ModelBuyerService(metaclass=Singleton):
         return ordered_model
 
     def get(self, model_id):
-        return Model.get(model_id)
+        model = Model.get(model_id)
+        if not model:
+            raise ModelNotFoundException
+        return model
 
     def get_model(self, model_id):
-        model = Model.get(model_id)
+        model = self.get(model_id)
+        if not model:
+            raise ModelNotFoundException
         return {
             "model": {"id": model.id, "weights": model.model.weights.tolist(), "type": model.model_type,
                       "status": model.status},
@@ -150,7 +158,7 @@ class ModelBuyerService(metaclass=Singleton):
         prediction_id = data["id"]
         model = self.get(prediction_id)
         if not model:
-            raise OrderedModelNotFoundException(prediction_id)
+            raise ModelNotFoundException(prediction_id)
         # TODO: Check this x_test
         x_test, y_test = self.data_loader.get_sub_set()
         logging.info(model.model)
