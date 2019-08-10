@@ -1,7 +1,6 @@
 import logging
-import json
 from flask_restplus import Resource, Namespace, fields
-from flask import request, flash, redirect
+from flask import request
 from model_buyer.services.model_buyer_service import ModelBuyerService
 
 api = Namespace('models', description='Model related operations')
@@ -76,23 +75,15 @@ reduced_ordered_model = api.model(name='Models', model={
 @api.route('', endpoint='model_resources_ep')
 class ModelResources(Resource):
 
-    @staticmethod
-    def _load_file(request_file):
-        if 'testing_file' not in request_file:
-            flash('No file part')
-            return redirect(request.url)
-        return request_file["testing_file"]
-
     @api.marshal_with(ordered_model, code=201)
     @api.doc('Create order model')
     def post(self):
         logging.info("New order model")
-        model_type = request.form.get("model_type")
-        user_id = request.form.get("user_id")
-        data_requirements = request.form.get("data_requirements")
+        model_type = request.get_json()["model_type"]
+        user_id = request.get_json()["user_id"]
+        data_requirements = request.get_json()["data_requirements"]
         payment_requirements = request.form.get("payment_requirements")
-        file = self._load_file(request.files)
-        return ModelBuyerService().make_new_order_model(model_type, data_requirements, file, user_id), 200
+        return ModelBuyerService().make_new_order_model(model_type, data_requirements, user_id), 200
 
     @api.marshal_list_with(reduced_ordered_model)
     def get(self):

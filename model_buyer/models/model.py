@@ -25,7 +25,7 @@ class ModelColumn(types.UserDefinedType):
         def process(value):
             x = value.X.tolist() if value.X is not None else None
             y = value.y.tolist() if value.y is not None else None
-            weights = value.weights.tolist() if value.y is not None else None
+            weights = value.weights.tolist()
             model_type = value.type
             return json.dumps({
                 'x': x, 'y': y, 'weights': weights, 'type': model_type
@@ -39,8 +39,7 @@ class ModelColumn(types.UserDefinedType):
             y = np.asarray(model_data['y'])
             model_type = model_data['type']
             weights = np.asarray(model_data['weights'])
-            model = ModelFactory.get_model(model_type)(x, y)
-            model.set_weights(weights)
+            model = ModelFactory.get_model(model_type)(X=x, y=y, weights=weights)
             return model
         return process
 
@@ -65,12 +64,14 @@ class Model(DbEntity):
     user = relationship("User", back_populates="models")
     User.models = relationship("Model", back_populates="user")
 
-    def __init__(self, model_type, data, name="default"):
+    def __init__(self, model_type, name="default", requirements=None):
         self.id = str(uuid.uuid1())
         self.model_type = model_type
         # TODO: revisar esto
-        self.model = ModelFactory.get_model(model_type)(data[0], data[1])
+        _model = ModelFactory.get_model(model_type)(requirements=requirements)
+        self.model = _model
         self.model.type = model_type
+        self.model.set_weights(_model.weights)
         self.status = BuyerModelStatus.INITIATED.name
         self.iterations = 0
         self.improvement = 0

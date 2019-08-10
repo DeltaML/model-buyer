@@ -7,6 +7,7 @@ class ModelNotFoundException(Exception):
         # Now for your custom code...
         self.status_code = status_code
 
+
 class UserNotFoundException(Exception):
     def __init__(self, user_id, status_code=404):
         message = "User not found {}".format(user_id)

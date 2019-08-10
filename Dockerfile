@@ -9,7 +9,6 @@ RUN pip install  --user -r requirements.txt
 FROM python:stretch AS release
 WORKDIR /app
 COPY --from=build /root/.local /root/.local
-ADD /commons /app/commons
 ADD /model_buyer /app/model_buyer
 RUN mkdir -p /app/db
 ENV PATH=/root/.local/bin:$PAT

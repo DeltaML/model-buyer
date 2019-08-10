@@ -5,7 +5,7 @@ from threading import Thread
 
 import numpy as np
 
-from model_buyer.exceptions.exceptions import  ModelNotFoundException
+from model_buyer.exceptions.exceptions import ModelNotFoundException
 from model_buyer.models.model import Model, BuyerModelStatus
 from model_buyer.services.federated_trainer_connector import FederatedTrainerConnector
 from model_buyer.utils.singleton import Singleton
@@ -37,7 +37,7 @@ class ModelBuyerService(metaclass=Singleton):
     def delete_model(model_id):
         ModelBuyerService.get(model_id).delete()
 
-    def make_new_order_model(self, model_type, requirements, file, user_id):
+    def make_new_order_model(self, model_type, requirements, user_id):
         """
 
         :param model_type:
@@ -47,26 +47,17 @@ class ModelBuyerService(metaclass=Singleton):
         :return:
         """
 
-        file_name = file.filename
-        if file and file_name:
-            self.load_data_set(file, file_name)
-        self.data_loader.load_data(file_name)
-        x_test, y_test = self.data_loader.get_sub_set()
-        ordered_model = Model(model_type=model_type, data=(x_test, y_test))
-        ordered_model.requirements = requirements
+        ordered_model = Model(model_type=model_type, requirements=requirements)
         ordered_model.user_id = user_id
         ordered_model.request_data = dict(requirements=requirements,
                                           status=ordered_model.status,
                                           model_id=ordered_model.id,
                                           model_type=model_type,
                                           model_buyer_id=self.id,
-                                          weights=ordered_model.model.weights.tolist(),
-                                          test_data=[x_test.tolist(), y_test.tolist()])
+                                          weights=ordered_model.model.weights.tolist())
         ordered_model.save()
 
         self.federated_trainer_connector.send_model_order(ordered_model.request_data)
-        logging.info(file_name)
-        logging.info(requirements)
         return {"requirements": requirements,
                 "model": {"id": ordered_model.id,
                           "status": ordered_model.status,
