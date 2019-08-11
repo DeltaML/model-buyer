@@ -33,9 +33,8 @@ class ModelBuyerService(metaclass=Singleton):
     def get_all():
         return Model.get()
 
-    @staticmethod
-    def delete_model(model_id):
-        ModelBuyerService.get(model_id).delete()
+    def delete_model(self, model_id):
+        self.get(model_id).delete()
 
     def make_new_order_model(self, model_type, requirements, user_id):
         """
