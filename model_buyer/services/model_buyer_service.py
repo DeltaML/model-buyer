@@ -7,6 +7,7 @@ import numpy as np
 
 from model_buyer.exceptions.exceptions import ModelNotFoundException
 from model_buyer.models.model import Model, BuyerModelStatus
+from model_buyer.services.entities.model_response import ModelResponse, NewModelResponse
 from model_buyer.services.federated_trainer_connector import FederatedTrainerConnector
 from model_buyer.utils.singleton import Singleton
 
@@ -57,13 +58,7 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model.save()
 
         self.federated_trainer_connector.send_model_order(ordered_model.request_data)
-        return {"requirements": requirements,
-                "model": {"id": ordered_model.id,
-                          "status": ordered_model.status,
-                          "type": ordered_model.model_type,
-                          "weights": ordered_model.model.weights.tolist()
-                          }
-                }
+        return NewModelResponse(requirements, ordered_model)
 
     def finish_model(self, model_id, data):
         buyer_model = self._update_model(model_id, data, BuyerModelStatus.FINISHED.name)
@@ -133,11 +128,7 @@ class ModelBuyerService(metaclass=Singleton):
         model = self.get(model_id)
         if not model:
             raise ModelNotFoundException
-        return {
-            "model": {"id": model.id, "weights": model.model.weights.tolist(), "type": model.model_type,
-                      "status": model.status},
-            "metrics": {"mse": model.mse, "partial_MSEs": model.partial_MSEs, "initial_mse": model.initial_mse}
-        }
+        return ModelResponse(model)
 
     def make_prediction(self, data):
         """

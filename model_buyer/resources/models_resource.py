@@ -1,6 +1,7 @@
 import logging
 from flask_restplus import Resource, Namespace, fields
 from flask import request
+
 from model_buyer.services.model_buyer_service import ModelBuyerService
 
 api = Namespace('models', description='Model related operations')
@@ -37,6 +38,7 @@ metrics = api.model(name='Metrics', model={
     'initial_mse': fields.Float(required=True, description='The Initial MSE of the model'),
     'mse': fields.Float(required=True, description='The MSE of the model'),
     'partial_MSEs': fields.List(fields.Nested(partial_MSE), required=True, description='The MSE of models updated without one local trainer each'),
+    'iterations': fields.Integer(required=True, description='Number of iterations')
 })
 
 model = api.model(name='Model', model={
