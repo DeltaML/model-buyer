@@ -1,10 +1,15 @@
 class ModelResponse:
 
     def __init__(self, model):
-        self.model = {"id": model.id, "weights": model.model.weights.tolist(), "type": model.model_type,
+        self.model = {"id": model.id,
+                      "weights": model.model.weights.tolist(),
+                      "type": model.model_type,
                       "status": model.status}
-        self.metrics = {"mse": model.mse, "partial_MSEs": model.partial_MSEs,
-                        "initial_mse": model.initial_mse, 'iterations': model.iterations}
+        self.metrics = {"mse": model.mse,
+                        "improvement":  model.improvement,
+                        "partial_MSEs": model.partial_MSEs,
+                        "initial_mse": model.initial_mse,
+                        'iterations': model.iterations}
 
 
 class NewModelResponse:
