@@ -1,11 +1,16 @@
+import logging
+import time
 import uuid
+from datetime import datetime
 from enum import Enum
-from flask import json
+
 import numpy as np
 import sqlalchemy.types as types
-from sqlalchemy import Column, String, Sequence, JSON, Float, Integer, ForeignKey, ARRAY
-from sqlalchemy.orm import relationship
 from commons.model.model_service import ModelFactory
+from flask import json
+from sqlalchemy import Column, String, Sequence, JSON, Float, Integer, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+
 from model_buyer.models.user import User
 from model_buyer.services.data_base import DbEntity
 
@@ -30,6 +35,7 @@ class ModelColumn(types.UserDefinedType):
             return json.dumps({
                 'x': x, 'y': y, 'weights': weights, 'type': model_type
             })
+
         return process
 
     def result_processor(self, dialect, coltype):
@@ -41,6 +47,7 @@ class ModelColumn(types.UserDefinedType):
             weights = np.asarray(model_data['weights'])
             model = ModelFactory.get_model(model_type)(X=x, y=y, weights=weights)
             return model
+
         return process
 
 
@@ -60,6 +67,9 @@ class Model(DbEntity):
     name = Column(String(100))
     contributions = Column(JSON)
     iterations = Column(Integer)
+    mse_history = Column(JSON)
+    creation_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_date = Column(DateTime, nullable=False, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="models")
     User.models = relationship("Model", back_populates="user")
@@ -77,6 +87,7 @@ class Model(DbEntity):
         self.improvement = 0
         self.name = name
         self.cost = 0.0
+        self.mse_history = []
 
     def set_weights(self, weights):
         self.model.set_weights(weights)
@@ -93,6 +104,19 @@ class Model(DbEntity):
         filters = {'id': model_id} if model_id else None
         return DbEntity.find(Model, filters)
 
-    def update_model(self, model, model_id=None):
-        filters = {'id': model_id} if model_id else None
-        self.update(Model, filters, {Model.model: model})
+    def update(self):
+        filters = {'id': self.id}
+        update_data = {Model.model: self.model, Model.status: self.status, Model.iterations: self.iterations,
+                       Model.improvement: self.improvement, Model.name: self.name, Model.cost: self.cost,
+                       Model.mse_history: self.mse_history, Model.initial_mse: self.initial_mse,
+                       Model.contributions: self.contributions,
+                       Model.updated_date: self.updated_date,
+                       Model.partial_MSEs: self.partial_MSEs,
+                       Model.mse: self.mse}
+        super(Model, self).update(Model, filters, update_data)
+
+    def add_mse(self, mse):
+        self.mse_history.append(dict(time=str(time.time()), mse=mse))
+
+    def set_request_data(self, value):
+        self.request_data = value.get()

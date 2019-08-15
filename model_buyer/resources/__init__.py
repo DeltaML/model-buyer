@@ -1,5 +1,5 @@
 import logging
-from flask import jsonify, make_response, abort
+from flask import jsonify, make_response
 from flask_restplus import Api
 
 from commons.model.exceptions.exceptions import ModelErrorException
@@ -30,7 +30,7 @@ def model_error_handler(error):
     :return:
     """
     logging.error(error)
-    return {'message': str(error)}, error.status_code
+    return _handle_error(error)
 
 
 @api.errorhandler(ModelNotFoundException)
@@ -52,7 +52,7 @@ def login_failure_handler(error):
     :return:
     """
     logging.error(error)
-    return {'message': str(error)}, 400
+    return _handle_error(error)
 
 
 @api.errorhandler(NoResultFoundException)
@@ -63,7 +63,7 @@ def not_found_error_handler(error):
     :return:
     """
     logging.error(error)
-    return {'message': str(error)}, 404
+    return _handle_error(error)
 
 
 @api.errorhandler(UserNotFoundException)
@@ -74,7 +74,7 @@ def user_not_found_error_handler(error):
     :return:
     """
     logging.error(error)
-    return {'message': str(error)}, 404
+    return _handle_error(error)
 
 
 @api.errorhandler(Exception)

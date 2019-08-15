@@ -7,7 +7,7 @@ import numpy as np
 
 from model_buyer.exceptions.exceptions import ModelNotFoundException
 from model_buyer.models.model import Model, BuyerModelStatus
-from model_buyer.services.entities.model_response import ModelResponse, NewModelResponse
+from model_buyer.services.entities.model_response import ModelResponse, NewModelResponse, NewModelRequestData
 from model_buyer.services.federated_trainer_connector import FederatedTrainerConnector
 from model_buyer.utils.singleton import Singleton
 
@@ -48,17 +48,12 @@ class ModelBuyerService(metaclass=Singleton):
         """
 
         ordered_model = Model(model_type=model_type, requirements=requirements)
+        # TODO agrojas: validate if user exists
         ordered_model.user_id = user_id
-        ordered_model.request_data = dict(requirements=requirements,
-                                          status=ordered_model.status,
-                                          model_id=ordered_model.id,
-                                          model_type=model_type,
-                                          model_buyer_id=self.id,
-                                          weights=ordered_model.model.weights.tolist())
+        ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type))
         ordered_model.save()
-
         self.federated_trainer_connector.send_model_order(ordered_model.request_data)
-        return NewModelResponse(requirements, ordered_model)
+        return NewModelResponse(ordered_model)
 
     def finish_model(self, model_id, data):
         buyer_model = self._update_model(model_id, data, BuyerModelStatus.FINISHED.name)
@@ -105,6 +100,7 @@ class ModelBuyerService(metaclass=Singleton):
             model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data[
                 "metrics"])
             ordered_model.mse = decrypted_MSE
+            ordered_model.add_mse(decrypted_MSE)
             ordered_model.partial_MSEs = decrypted_partial_MSEs
             progress_update = self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE,
                                                                                    decrypted_partial_MSEs, public_key)
@@ -113,9 +109,8 @@ class ModelBuyerService(metaclass=Singleton):
             ordered_model.improvement = progress_update[1]
             ordered_model.iterations += 1
 
-        ordered_model.save()
         logging.info("Updating saved model. Weights: {}".format(model.weights))
-        ordered_model.update_model(model, model_id)
+        ordered_model.update()
         return ordered_model
 
     def get(self, model_id):

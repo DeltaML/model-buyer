@@ -1,6 +1,6 @@
 class ModelNotFoundException(Exception):
-    def __init__(self, user_id, status_code=404):
-        message = "Model not found with id {}".format(user_id)
+    def __init__(self, model_id, status_code=404):
+        message = "Model not found with id {}".format(model_id)
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
 

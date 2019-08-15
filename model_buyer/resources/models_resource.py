@@ -1,6 +1,7 @@
 import logging
-from flask_restplus import Resource, Namespace, fields
+
 from flask import request
+from flask_restplus import Resource, Namespace, fields
 
 from model_buyer.services.model_buyer_service import ModelBuyerService
 
@@ -30,8 +31,16 @@ requirements = api.model(name='Requirements', model={
 })
 
 partial_MSE = api.model(name='Partial MSE Metrics', model={
-    'data_owner': fields.String(required=True, description='The data owner removed from the training of this model to obtain the partial MSE'),
+    'data_owner': fields.String(required=True,
+                                description='The data owner removed from the training of this model to obtain the partial MSE'),
     'partial_MSE': fields.Float(required=True, description='The MSE of model updated without the data owner'),
+})
+
+
+mse_history = api.model(name='MSE History', model={
+    'time': fields.String(required=True,
+                                description='The data owner removed from the training of this model to obtain the partial MSE'),
+    'mse': fields.Float(required=True, description='The MSE of model updated without the data owner'),
 })
 
 metrics = api.model(name='Metrics', model={
@@ -39,7 +48,8 @@ metrics = api.model(name='Metrics', model={
     'mse': fields.Float(required=True, description='The MSE of the model'),
     'partial_MSEs': fields.List(fields.Nested(partial_MSE), required=True, description='The MSE of models updated without one local trainer each'),
     'iterations': fields.Integer(required=True, description='Number of iterations'),
-    'improvement': fields.Fixed(required=True, decimals=5, description='The model improvement')
+    'improvement': fields.Fixed(required=True, decimals=5, description='The model improvement'),
+    'mse_history': fields.List(fields.Nested(mse_history), required=True, description='The model mse history list')
 })
 
 model = api.model(name='Model', model={
@@ -47,17 +57,21 @@ model = api.model(name='Model', model={
     'status': fields.String(required=True, description='The model status'),
     'type': fields.String(required=True, description='The model type'),
     'weights': fields.List(fields.Raw, required=True, description='The model weights'),
-})
+    'creation_date': fields.String(description='The model creation date'),
+    'updated_date': fields.String(description='The model updated date'),
+    'user_id': fields.String(required=True, description='The model user_id'),
+    'name': fields.String(required=True, description='The model name')
 
-ordered_model = api.model(name='Ordered Model', model={
-    'requirements': fields.Nested(requirements, required=True, description='The model requirements'),
-    'model': fields.Nested(model, required=True, description='The model')
 })
-
 updated_model = api.model(name='Updated Model', model={
     'metrics': fields.Nested(metrics, required=True, description='The model requirements'),
     'model': fields.Nested(model, required=True, description='The model')
 })
+
+ordered_model = api.model(name='Ordered Model', model={
+    'model': fields.Nested(model, required=True, description='The model')
+})
+
 
 model_request = api.model(name='Ordered Model Request', model={
     'data_requirements': fields.Nested(requirements, required=True, description='The model requirements'),
@@ -71,7 +85,10 @@ reduced_ordered_model = api.model(name='Models', model={
     'name': fields.String(required=True, description='The model name'),
     'improvement': fields.Fixed(required=True, decimals=5, description='The model improvement'),
     'cost': fields.Float(required=True, description='The model cost'),
-    'iterations': fields.Integer(required=True, description='Number of iterations')
+    'iterations': fields.Integer(required=True, description='Number of iterations'),
+    'mse': fields.Float(required=True, description='The model mse'),
+    'user_id': fields.String(required=True, description='The model user_id'),
+    'creation_date': fields.String(description='The model creation date')
 })
 
 
