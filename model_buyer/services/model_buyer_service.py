@@ -5,9 +5,9 @@ from threading import Thread
 
 import numpy as np
 
-from commons.model.model_service import ModelFactory
-from model_buyer.exceptions.exceptions import OrderedModelNotFoundException
+from model_buyer.exceptions.exceptions import ModelNotFoundException
 from model_buyer.models.model import Model, BuyerModelStatus
+from model_buyer.services.entities.model_response import ModelResponse, NewModelResponse, NewModelRequestData
 from model_buyer.services.federated_trainer_connector import FederatedTrainerConnector
 from model_buyer.utils.singleton import Singleton
 
@@ -34,7 +34,10 @@ class ModelBuyerService(metaclass=Singleton):
     def get_all():
         return Model.get()
 
-    def make_new_order_model(self, model_type, requirements, file, user_id):
+    def delete_model(self, model_id):
+        self.get(model_id).delete()
+
+    def make_new_order_model(self, model_type, requirements, user_id):
         """
 
         :param model_type:
@@ -44,33 +47,13 @@ class ModelBuyerService(metaclass=Singleton):
         :return:
         """
 
-        file_name = file.filename
-        if file and file_name:
-            self.load_data_set(file, file_name)
-        self.data_loader.load_data(file_name)
-        x_test, y_test = self.data_loader.get_sub_set()
-        ordered_model = Model(model_type=model_type, data=(x_test, y_test))
-        ordered_model.requirements = requirements
+        ordered_model = Model(model_type=model_type, requirements=requirements)
+        # TODO agrojas: validate if user exists
         ordered_model.user_id = user_id
-        ordered_model.request_data = dict(requirements=requirements,
-                                          status=ordered_model.status,
-                                          model_id=ordered_model.id,
-                                          model_type=model_type,
-                                          model_buyer_id=self.id,
-                                          weights=ordered_model.model.weights.tolist(),
-                                          test_data=[x_test.tolist(), y_test.tolist()])
+        ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type))
         ordered_model.save()
-
         self.federated_trainer_connector.send_model_order(ordered_model.request_data)
-        logging.info(file_name)
-        logging.info(requirements)
-        return {"requirements": requirements,
-                "model": {"id": ordered_model.id,
-                          "status": ordered_model.status,
-                          "type": ordered_model.model_type,
-                          "weights": ordered_model.model.weights.tolist()
-                          }
-                }
+        return NewModelResponse(ordered_model)
 
     def finish_model(self, model_id, data):
         buyer_model = self._update_model(model_id, data, BuyerModelStatus.FINISHED.name)
@@ -117,6 +100,7 @@ class ModelBuyerService(metaclass=Singleton):
             model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data[
                 "metrics"])
             ordered_model.mse = decrypted_MSE
+            ordered_model.add_mse(decrypted_MSE)
             ordered_model.partial_MSEs = decrypted_partial_MSEs
             progress_update = self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE,
                                                                                    decrypted_partial_MSEs, public_key)
@@ -125,21 +109,21 @@ class ModelBuyerService(metaclass=Singleton):
             ordered_model.improvement = progress_update[1]
             ordered_model.iterations += 1
 
-        ordered_model.save()
         logging.info("Updating saved model. Weights: {}".format(model.weights))
-        ordered_model.update_model(model, model_id)
+        ordered_model.update()
         return ordered_model
 
     def get(self, model_id):
-        return Model.get(model_id)
+        model = Model.get(model_id)
+        if not model:
+            raise ModelNotFoundException
+        return model
 
     def get_model(self, model_id):
-        model = Model.get(model_id)
-        return {
-            "model": {"id": model.id, "weights": model.model.weights.tolist(), "type": model.model_type,
-                      "status": model.status},
-            "metrics": {"mse": model.mse, "partial_MSEs": model.partial_MSEs, "initial_mse": model.initial_mse}
-        }
+        model = self.get(model_id)
+        if not model:
+            raise ModelNotFoundException
+        return ModelResponse(model)
 
     def make_prediction(self, data):
         """
@@ -150,7 +134,7 @@ class ModelBuyerService(metaclass=Singleton):
         prediction_id = data["id"]
         model = self.get(prediction_id)
         if not model:
-            raise OrderedModelNotFoundException(prediction_id)
+            raise ModelNotFoundException(prediction_id)
         # TODO: Check this x_test
         x_test, y_test = self.data_loader.get_sub_set()
         logging.info(model.model)
