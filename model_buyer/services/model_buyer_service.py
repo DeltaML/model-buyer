@@ -37,17 +37,17 @@ class ModelBuyerService(metaclass=Singleton):
     def delete_model(self, model_id):
         self.get(model_id).delete()
 
-    def make_new_order_model(self, model_type, requirements, user_id):
+    def make_new_order_model(self, model_type, name, requirements, user_id):
         """
 
         :param model_type:
+        :param name:
         :param requirements:
-        :param file:
         :param user_id:
         :return:
         """
 
-        ordered_model = Model(model_type=model_type, requirements=requirements)
+        ordered_model = Model(model_type=model_type, name=name, requirements=requirements)
         # TODO agrojas: validate if user exists
         ordered_model.user_id = user_id
         ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type))
