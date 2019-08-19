@@ -56,15 +56,19 @@ class ModelBuyerService(metaclass=Singleton):
         return NewModelResponse(ordered_model)
 
     def finish_model(self, model_id, data):
-        buyer_model = self._update_model(model_id, data, BuyerModelStatus.FINISHED.name)
-        logging.info("Model status: {} weights {}".format(buyer_model.status, buyer_model.model["weights"]))
-        self.federated_trainer_connector.send_decrypted_MSEs(self._build_response_with_MSEs(model_id, data))
+        model = self._update_model(model_id, data, BuyerModelStatus.FINISHED.name)
+        logging.info("Model status: {} weights {}".format(model.status, model.model.weights))
+        model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data["metrics"])
+        self.federated_trainer_connector.send_decrypted_MSEs(model_id, model.initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key)
 
     def _decrypt_mse(self, encrypted_mse):
         return self.encryption_service.get_deserialized_desencrypted_value(encrypted_mse) if self.config[
             "ACTIVE_ENCRYPTION"] else encrypted_mse
 
     def _build_response_with_MSEs(self, model_id, data):
+        logging.info("_build_response_with_MSEs")
+        logging.info(data)
+
         decrypted_MSE = self._decrypt_mse(data["mse"])
         decrypted_partial_MSEs = dict(
             [(data_owner, self._decrypt_mse(partial_mse)) for data_owner, partial_mse in data["partial_MSEs"].items()])
