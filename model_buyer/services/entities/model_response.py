@@ -2,6 +2,8 @@ class ModelResponse:
 
     @staticmethod
     def map_partial_mse(partial_mse):
+        if not partial_mse:
+            return []
         return [dict(data_owner=do_id, partial_MSE=p_mse) for do_id, p_mse in partial_mse.items()]
 
     @staticmethod
