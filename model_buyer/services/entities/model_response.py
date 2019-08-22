@@ -36,7 +36,7 @@ class NewModelResponse:
         self.model = {"id": ordered_model.id,
                       "status": ordered_model.status,
                       "type": ordered_model.model_type,
-                      "weights": ordered_model.model.weights.tolist()
+                      "weights": ordered_model.get_weights()
                       }
 
 
@@ -48,7 +48,7 @@ class NewModelRequestData:
         self.model_id = ordered_model.id
         self.model_type = model_type
         self.model_buyer_id = user_id
-        self.weights = ordered_model.model.weights.tolist()
+        self.weights = ordered_model.get_weights()
 
     def get(self):
         return dict(requirements=self.requirements,

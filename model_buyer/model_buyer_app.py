@@ -40,7 +40,7 @@ api.init_app(app)
 CORS(app)
 logging.info("Model Buyer is running")
 
-encryption_service = EncryptionService()
+encryption_service = EncryptionService(is_active=app.config["ACTIVE_ENCRYPTION"])
 public_key, private_key = encryption_service.generate_key_pair(app.config["KEY_LENGTH"])
 encryption_service.set_public_key(public_key.n)
 data_base = Database(app.config)

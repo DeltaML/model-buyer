@@ -52,8 +52,19 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model.user_id = user_id
         ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type))
         ordered_model.save()
-        self.federated_trainer_connector.send_model_order(ordered_model.request_data)
+        self.federated_trainer_connector.send_model_order(self._get_request_data(ordered_model))
         return NewModelResponse(ordered_model)
+
+    def _get_request_data(self, ordered_model):
+        """
+        TODO agrojas review this
+        :param ordered_model:
+        :return:
+        """
+        request_data = ordered_model.request_data
+        if self.encryption_service.is_active:
+            request_data["weights"] = self.encryption_service.get_serialized_encrypted_collection(request_data["weights"])
+        return request_data
 
     def finish_model(self, model_id, data):
         model = self._update_model(model_id, data, BuyerModelStatus.FINISHED.name)
@@ -88,11 +99,11 @@ class ModelBuyerService(metaclass=Singleton):
         weights = self.encryption_service.decrypt_and_deserizalize_collection(
             self.encryption_service.get_private_key(),
             data["model"]["weights"]
-        ) if self.config["ACTIVE_ENCRYPTION"] else data["model"]["weights"]
+        ) if self.encryption_service.is_active else data["model"]["weights"]
         logging.info("Updating model from fed. aggr. Weights: {}".format(weights))
         ordered_model = self.get(model_id)
         model = ordered_model.model
-        model.set_weights(np.asarray(weights))
+        model.set_weights(weights)
         ordered_model.model = model
         ordered_model.status = status
         # TODO: TEMPORARY SOLUTION, ADD ANOTHER ENDPOINT FOR INITIAL MSE REQUEST

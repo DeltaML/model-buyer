@@ -30,7 +30,7 @@ class ModelColumn(types.UserDefinedType):
         def process(value):
             x = value.X.tolist() if value.X is not None else None
             y = value.y.tolist() if value.y is not None else None
-            weights = value.weights.tolist()
+            weights = value.weights
             model_type = value.type
             return json.dumps({
                 'x': x, 'y': y, 'weights': weights, 'type': model_type
@@ -81,7 +81,7 @@ class Model(DbEntity):
         _model = ModelFactory.get_model(model_type)(requirements=requirements)
         self.model = _model
         self.model.type = model_type
-        self.model.set_weights(_model.weights)
+        self.model.set_weights(_model.weights.tolist())
         self.status = BuyerModelStatus.INITIATED.name
         self.iterations = 0
         self.improvement = 0
@@ -91,6 +91,9 @@ class Model(DbEntity):
 
     def set_weights(self, weights):
         self.model.set_weights(weights)
+
+    def get_weights(self):
+        return self.model.weights
 
     def predict(self, x, y):
         x_array = np.asarray(x)
