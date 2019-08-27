@@ -3,8 +3,6 @@ import os
 import uuid
 from threading import Thread
 
-import numpy as np
-
 from model_buyer.exceptions.exceptions import ModelNotFoundException
 from model_buyer.models.model import Model, BuyerModelStatus
 from model_buyer.services.entities.model_response import ModelResponse, NewModelResponse, NewModelRequestData
@@ -50,7 +48,8 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model = Model(model_type=model_type, name=name, requirements=requirements)
         # TODO agrojas: validate if user exists
         ordered_model.user_id = user_id
-        ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type))
+        # TODO agrojas: extract to commons
+        ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type, self.encryption_service.get_public_key()))
         ordered_model.save()
         self.federated_trainer_connector.send_model_order(self._get_request_data(ordered_model))
         return NewModelResponse(ordered_model)
@@ -88,7 +87,7 @@ class ModelBuyerService(metaclass=Singleton):
 
     def update_model(self, model_id, data):
         """
-
+_decrypt_mse
         :param model_id:
         :param data:
         :return:
