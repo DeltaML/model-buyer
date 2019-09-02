@@ -42,10 +42,11 @@ class NewModelResponse:
                         "improvement": ordered_model.improvement,
                         }
 
-    def get_update_response(self):
+    def get_update_response(self, diffs):
         return {
-            "weights": self.model['weights'].tolist(),
-            "mse": self.metrics['mse']
+            "weights": self.model['weights'],
+            "mse": self.metrics['mse'],
+            "diffs": diffs
         }
 
 

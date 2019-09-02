@@ -1,6 +1,7 @@
 import logging
 import os
 import uuid
+import numpy as np
 from threading import Thread
 
 from model_buyer.exceptions.exceptions import ModelNotFoundException
@@ -91,11 +92,17 @@ class ModelBuyerService(metaclass=Singleton):
         :param data:
         :return:
         """
-        import numpy as np
         ordered_model = self._update_model(model_id, data, BuyerModelStatus.IN_PROGRESS.name)
+        diffs = data['metrics']['diffs']
         weights = ordered_model.get_weights()
         np.around(weights, decimals=3, out=weights)
-        return NewModelResponse(ordered_model).get_update_response()
+        if self.encryption_service.is_active:
+            weights = self.encryption_service.get_serialized_encrypted_collection(weights)
+            diffs = [self.encryption_service.decrypt_and_deserizalize_collection(self.encryption_service.get_private_key(), diff) for diff in diffs]
+            ordered_model.initial_mse = np.mean(np.asarray(diffs)**2)
+            logging.info(ordered_model.initial_mse)
+        ordered_model.set_weights(weights)
+        return NewModelResponse(ordered_model).get_update_response(diffs)
 
     def _update_model(self, model_id, data, status):
         weights = self.encryption_service.decrypt_and_deserizalize_collection(
@@ -110,7 +117,7 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model.status = status
         # TODO: TEMPORARY SOLUTION, ADD ANOTHER ENDPOINT FOR INITIAL MSE REQUEST
         if data['first_update']:
-            ordered_model.initial_mse = self._decrypt_mse(data["metrics"]["initial_mse"])
+            #ordered_model.initial_mse = self._decrypt_mse(data["metrics"]["initial_mse"])
             logging.info("INITIAL MSE: {}".format(ordered_model.initial_mse))
         else:
             initial_mse = ordered_model.initial_mse
