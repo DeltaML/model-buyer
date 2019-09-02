@@ -4,4 +4,4 @@ PORT = 9090
 ACTIVE_ENCRYPTION = False
 DATA_SETS_DIR = "./dataset"
 DB_ENGINE = 'sqlite:////app/db/model_buyer.db'
-STEP=0.1
+STEP=1.5
