@@ -95,12 +95,16 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model = self._update_model(model_id, data, BuyerModelStatus.IN_PROGRESS.name)
         diffs = data['metrics']['diffs']
         weights = ordered_model.get_weights()
+        logging.info(weights)
+        weights = np.asarray(weights) if type(weights) == list else weights
         np.around(weights, decimals=3, out=weights)
         if self.encryption_service.is_active:
             weights = self.encryption_service.get_serialized_encrypted_collection(weights)
             diffs = [self.encryption_service.decrypt_and_deserizalize_collection(self.encryption_service.get_private_key(), diff) for diff in diffs]
-            ordered_model.initial_mse = np.mean(np.asarray(diffs)**2)
-            logging.info(ordered_model.initial_mse)
+            if data['first_update']:
+                ordered_model.initial_mse = np.mean(np.asarray(diffs)**2)
+                logging.info(ordered_model.initial_mse)
+            ordered_model.add_mse(np.mean(np.asarray(diffs) ** 2))
         ordered_model.set_weights(weights)
         return NewModelResponse(ordered_model).get_update_response(diffs)
 
@@ -119,19 +123,19 @@ class ModelBuyerService(metaclass=Singleton):
         if data['first_update']:
             #ordered_model.initial_mse = self._decrypt_mse(data["metrics"]["initial_mse"])
             logging.info("INITIAL MSE: {}".format(ordered_model.initial_mse))
-        else:
-            initial_mse = ordered_model.initial_mse
-            model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data[
-                "metrics"])
-            ordered_model.mse = decrypted_MSE
-            ordered_model.add_mse(decrypted_MSE)
-            ordered_model.partial_MSEs = decrypted_partial_MSEs
-            progress_update = self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE,
-                                                                                   decrypted_partial_MSEs, public_key)
-            logging.info("CONTRIBUTIONS: {}".format(progress_update))
-            ordered_model.contributions = progress_update[2]
-            ordered_model.improvement = progress_update[1]
-            ordered_model.iterations += 1
+        #else:
+            #initial_mse = ordered_model.initial_mse
+            #model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data[
+            #    "metrics"])
+            #ordered_model.mse = decrypted_MSE
+            #ordered_model.add_mse(decrypted_MSE)
+            #ordered_model.partial_MSEs = decrypted_partial_MSEs
+            #progress_update = self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE,
+            #                                                                       decrypted_partial_MSEs, public_key)
+            #logging.info("CONTRIBUTIONS: {}".format(progress_update))
+            #ordered_model.contributions = progress_update[2]
+            #ordered_model.improvement = progress_update[1]
+            #ordered_model.iterations += 1
 
         logging.info("Updating saved model. Weights: {}".format(model.weights))
         ordered_model.update()

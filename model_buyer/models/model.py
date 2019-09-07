@@ -118,6 +118,7 @@ class Model(DbEntity):
         super(Model, self).update(Model, filters, update_data)
 
     def add_mse(self, mse):
+        self.mse = mse
         self.mse_history.append(dict(time=str(time.time()), mse=mse))
 
     def set_request_data(self, value):
