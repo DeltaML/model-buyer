@@ -96,7 +96,7 @@ class ModelBuyerService(metaclass=Singleton):
         diffs = data['metrics']['diffs']
         weights = ordered_model.get_weights()
         logging.info(weights)
-        weights = np.asarray(weights) if type(weights) == list else weights
+        #weights = np.asarray(weights) if type(weights) == list else weights
         np.around(weights, decimals=3, out=weights)
         if self.encryption_service.is_active:
             weights = self.encryption_service.get_serialized_encrypted_collection(weights)
