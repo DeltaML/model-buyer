@@ -44,12 +44,11 @@ class ModelBuyerService(metaclass=Singleton):
         :param user_id:
         :return:
         """
-
         ordered_model = Model(model_type=model_type, name=name, requirements=requirements)
         # TODO agrojas: validate if user exists
         ordered_model.user_id = user_id
         # TODO agrojas: extract to commons
-        ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type, self.encryption_service.get_public_key()))
+        ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type, self.config['STEP'], self.encryption_service.get_public_key()))
         ordered_model.save()
         self.federated_aggregator_connector.send_model_order(self._get_request_data(ordered_model))
         return NewModelResponse(ordered_model)
@@ -93,7 +92,11 @@ class ModelBuyerService(metaclass=Singleton):
         :param data:
         :return:
         """
-        return self._update_model(model_id, data, BuyerModelStatus.IN_PROGRESS.name)
+        import numpy as np
+        ordered_model = self._update_model(model_id, data, BuyerModelStatus.IN_PROGRESS.name)
+        weights = ordered_model.get_weights()
+        np.around(weights, decimals=3, out=weights)
+        return NewModelResponse(ordered_model).get_update_response()
 
     def _update_model(self, model_id, data, status):
         weights = self.encryption_service.decrypt_and_deserizalize_collection(

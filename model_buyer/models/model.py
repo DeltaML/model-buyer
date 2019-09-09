@@ -36,7 +36,6 @@ class ModelColumn(types.UserDefinedType):
             return json.dumps({
                 'x': x, 'y': y, 'weights': weights, 'type': model_type
             })
-
         return process
 
     def result_processor(self, dialect, coltype):
