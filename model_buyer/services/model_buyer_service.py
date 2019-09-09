@@ -6,7 +6,7 @@ from threading import Thread
 from model_buyer.exceptions.exceptions import ModelNotFoundException
 from model_buyer.models.model import Model, BuyerModelStatus
 from model_buyer.services.entities.model_response import ModelResponse, NewModelResponse, NewModelRequestData
-from model_buyer.services.federated_trainer_connector import FederatedTrainerConnector
+from model_buyer.services.federated_aggregator_connector import FederatedAggregatorConnector
 from model_buyer.utils.singleton import Singleton
 
 
@@ -18,7 +18,7 @@ class ModelBuyerService(metaclass=Singleton):
         self.data_loader = None
         self.config = None
         self.predictions = []
-        self.federated_trainer_connector = None
+        self.federated_aggregator_connector = None
 
     def init(self, encryption_service, data_loader, config):
         self.encryption_service = encryption_service
@@ -26,7 +26,7 @@ class ModelBuyerService(metaclass=Singleton):
         self.config = config
         self.predictions = []
         if config:
-            self.federated_trainer_connector = FederatedTrainerConnector(config)
+            self.federated_aggregator_connector = FederatedAggregatorConnector(config)
 
     @staticmethod
     def get_all():
@@ -51,7 +51,7 @@ class ModelBuyerService(metaclass=Singleton):
         # TODO agrojas: extract to commons
         ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type, self.encryption_service.get_public_key()))
         ordered_model.save()
-        self.federated_trainer_connector.send_model_order(self._get_request_data(ordered_model))
+        self.federated_aggregator_connector.send_model_order(self._get_request_data(ordered_model))
         return NewModelResponse(ordered_model)
 
     def _get_request_data(self, ordered_model):
@@ -66,19 +66,21 @@ class ModelBuyerService(metaclass=Singleton):
         return request_data
 
     def finish_model(self, model_id, data):
+        if data["model"]["status"] == "ERROR":
+            self._finish_on_error(model_id)
+            return
+        logging.info("Finish model with status {}".format(BuyerModelStatus.FINISHED.name))
+
         model = self._update_model(model_id, data, BuyerModelStatus.FINISHED.name)
         logging.info("Model status: {} weights {}".format(model.status, model.model.weights))
         model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data["metrics"])
-        self.federated_trainer_connector.send_decrypted_MSEs(model_id, model.initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key)
+        self.federated_aggregator_connector.send_decrypted_MSEs(model_id, model.initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key)
 
     def _decrypt_mse(self, encrypted_mse):
         return self.encryption_service.get_deserialized_desencrypted_value(encrypted_mse) if self.config[
             "ACTIVE_ENCRYPTION"] else encrypted_mse
 
     def _build_response_with_MSEs(self, model_id, data):
-        logging.info("_build_response_with_MSEs")
-        logging.info(data)
-
         decrypted_MSE = self._decrypt_mse(data["mse"])
         decrypted_partial_MSEs = dict(
             [(data_owner, self._decrypt_mse(partial_mse)) for data_owner, partial_mse in data["partial_MSEs"].items()])
@@ -87,7 +89,6 @@ class ModelBuyerService(metaclass=Singleton):
 
     def update_model(self, model_id, data):
         """
-_decrypt_mse
         :param model_id:
         :param data:
         :return:
@@ -116,8 +117,8 @@ _decrypt_mse
             ordered_model.mse = decrypted_MSE
             ordered_model.add_mse(decrypted_MSE)
             ordered_model.partial_MSEs = decrypted_partial_MSEs
-            progress_update = self.federated_trainer_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE,
-                                                                                   decrypted_partial_MSEs, public_key)
+            progress_update = self.federated_aggregator_connector.send_decrypted_MSEs(model_id, initial_mse, decrypted_MSE,
+                                                                                      decrypted_partial_MSEs, public_key)
             logging.info("CONTRIBUTIONS: {}".format(progress_update))
             ordered_model.contributions = progress_update[2]
             ordered_model.improvement = progress_update[1]
@@ -177,10 +178,17 @@ _decrypt_mse
             "model_id": prediction_data["model_id"],
             "prediction_id": prediction_data["prediction_id"]
         }
-        Thread(target=self.federated_trainer_connector.send_transformed_prediction,
+        Thread(target=self.federated_aggregator_connector.send_transformed_prediction,
                args=prediction_transformed).start()
 
     def load_data_set(self, file, filename):
         logging.info(file)
         file.save(os.path.join(self.config.get("DATA_SETS_DIR"), filename))
         file.close()
+
+    def _finish_on_error(self, model_id):
+        logging.info("Finish model {} with status {}".format(model_id, BuyerModelStatus.ERROR.name))
+        ordered_model = self.get(model_id)
+        ordered_model.status = BuyerModelStatus.ERROR.name
+        ordered_model.save()
+
