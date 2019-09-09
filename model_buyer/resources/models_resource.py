@@ -127,8 +127,7 @@ class ModelResource(Resource):
     def patch(self, model_id):
         data = request.get_json()
         logging.info("Received update from fed. aggr. {}".format(data))
-        ModelBuyerService().update_model(model_id, data)
-        return 200
+        return ModelBuyerService().update_model(model_id, data)
 
     @api.doc('get_model')
     @api.marshal_with(updated_model)
