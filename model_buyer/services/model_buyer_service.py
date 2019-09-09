@@ -4,7 +4,6 @@ import uuid
 import numpy as np
 from threading import Thread
 
-from commons.operations_utils.functions import serialize, deserialize
 from model_buyer.exceptions.exceptions import ModelNotFoundException
 from model_buyer.models.model import Model, BuyerModelStatus
 from model_buyer.services.entities.model_response import ModelResponse, NewModelResponse, NewModelRequestData
@@ -61,10 +60,8 @@ class ModelBuyerService(metaclass=Singleton):
         else:
             return collection
 
-
     def make_new_order_model(self, model_type, name, requirements, user_id):
         """
-
         :param model_type:
         :param name:
         :param requirements:
@@ -90,11 +87,11 @@ class ModelBuyerService(metaclass=Singleton):
         request_data["weights"] = self._only_serialize_encrypted_collection(request_data["weights"])
         return request_data
 
-    def finish_model(self, model_id, data):
-        model, diffs = self._update_model(model_id, data, BuyerModelStatus.FINISHED.name)
-        logging.info("Model status: {} weights {}".format(model.status, model.model.weights))
-        model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data["metrics"])
-        self.federated_trainer_connector.send_decrypted_MSEs(model_id, model.initial_mse, decrypted_MSE, decrypted_partial_MSEs, public_key)
+    def finish_model(self, model_id):
+        ordered_model = self.get(model_id)
+        ordered_model.status = BuyerModelStatus.FINISHED.name
+        logging.info("Model status: {} weights {}".format(ordered_model.status, ordered_model.model.weights))
+        ordered_model.update()
 
     def _build_response_with_MSEs(self, model_id, data):
         logging.info("_build_response_with_MSEs")
@@ -120,27 +117,32 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model = self.get(model_id)
         ordered_model.status = status
         diffs = data['metrics']['diffs']
+        partial_diffs = data['metrics']['partial_diffs']
         weights = self._decrypt_collection(data["model"]["weights"])
         logging.info("Updating model from fed. aggr. Weights: {}".format(weights))
         np.around(weights, decimals=3, out=weights)
         if self.encryption_service.is_active:
             weights = self.encryption_service.get_serialized_encrypted_collection(weights)
             diffs = [self.encryption_service.decrypt_and_deserizalize_collection(self.encryption_service.get_private_key(), diff) for diff in diffs]
+            for trainer in partial_diffs:
+                partial_diffs[trainer] = [self.encryption_service.decrypt_and_deserizalize_collection(self.encryption_service.get_private_key(), diff) for diff in partial_diffs[trainer]]
+
         mse = np.mean(np.asarray(diffs) ** 2)
+        partial_MSEs = {}
+        for trainer in partial_diffs:
+            partial_MSEs[trainer] = np.mean(np.asarray(partial_diffs[trainer]) ** 2)
         if data['first_update']:
             ordered_model.initial_mse = mse
             logging.info("INITIAL MSE: {}".format(ordered_model.initial_mse))
         ordered_model.add_mse(mse)
         ordered_model.set_weights(weights)
-
-        #model_id, decrypted_MSE, decrypted_partial_MSEs, public_key = self._build_response_with_MSEs(model_id, data["metrics"])
-        #ordered_model.partial_MSEs = decrypted_partial_MSEs
-        #progress_update = self.federated_trainer_connector.send_decrypted_MSEs(
-        #    model_id, ordered_model.initial_mse, mse, decrypted_partial_MSEs, public_key
-        #)
-        #logging.info("CONTRIBUTIONS: {}".format(progress_update))
-        #ordered_model.contributions = progress_update[2]
-        #ordered_model.improvement = progress_update[1]
+        ordered_model.partial_MSEs = partial_MSEs
+        progress_update = self.federated_trainer_connector.send_decrypted_MSEs(
+            model_id, ordered_model.initial_mse, mse, partial_MSEs, self.encryption_service.get_public_key()
+        )
+        logging.info("CONTRIBUTIONS: {}".format(progress_update))
+        ordered_model.contributions = progress_update[2]
+        ordered_model.improvement = progress_update[1]
         ordered_model.iterations += 1
         logging.info("Updating saved model. Weights: {}".format(ordered_model.get_weights()))
         ordered_model.update()
