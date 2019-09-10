@@ -36,16 +36,17 @@ class NewModelResponse:
         self.model = {"id": ordered_model.id,
                       "status": ordered_model.status,
                       "type": ordered_model.model_type,
-                      "weights": ordered_model.get_weights()
+                      "weights": ordered_model.get_weights_as_list()
                       }
         self.metrics = {"mse": ordered_model.mse,
                         "improvement": ordered_model.improvement,
                         }
 
-    def get_update_response(self):
+    def get_update_response(self, diffs):
         return {
-            "weights": self.model['weights'].tolist(),
-            "mse": self.metrics['mse']
+            "weights": self.model['weights'],
+            "mse": self.metrics['mse'],
+            "diffs": diffs
         }
 
 
@@ -57,7 +58,7 @@ class NewModelRequestData:
         self.model_id = ordered_model.id
         self.model_type = model_type
         self.model_buyer_id = user_id
-        self.weights = ordered_model.get_weights()
+        self.weights = ordered_model.get_weights_as_list()
         self.public_key = public_key
         self.step = step
 

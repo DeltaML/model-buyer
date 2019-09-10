@@ -30,7 +30,7 @@ class ModelColumn(types.UserDefinedType):
         def process(value):
             x = value.X.tolist() if value.X is not None else None
             y = value.y.tolist() if value.y is not None else None
-            weights = value.weights
+            weights = value.weights if type(value.weights) == list else value.weights.tolist()
             model_type = value.type
             return json.dumps({
                 'x': x, 'y': y, 'weights': weights, 'type': model_type
@@ -77,10 +77,10 @@ class Model(DbEntity):
         self.id = str(uuid.uuid1())
         self.model_type = model_type
         # TODO: revisar esto
-        _model = ModelFactory.get_model(model_type)(requirements=requirements)
-        self.model = _model
+        self.model = ModelFactory.get_model(model_type)(requirements=requirements)
+        #self.model = _model
         self.model.type = model_type
-        self.model.set_weights(_model.weights.tolist())
+        #self.model.set_weights(_model.weights)
         self.status = BuyerModelStatus.INITIATED.name
         self.iterations = 0
         self.improvement = 0
@@ -89,10 +89,16 @@ class Model(DbEntity):
         self.mse_history = []
 
     def set_weights(self, weights):
+        if type(weights) == list:
+            weights = np.asarray(weights)
         self.model.set_weights(weights)
 
     def get_weights(self):
-        return self.model.weights
+        weights = self.model.weights
+        return np.asarray(weights) if type(weights) == list else weights
+
+    def get_weights_as_list(self):
+        return self.model.weights.tolist()
 
     def predict(self, x, y):
         x_array = np.asarray(x)
@@ -118,6 +124,7 @@ class Model(DbEntity):
         super(Model, self).update(Model, filters, update_data)
 
     def add_mse(self, mse):
+        self.mse = mse
         self.mse_history.append(dict(time=str(time.time()), mse=mse))
 
     def set_request_data(self, value):
