@@ -6,6 +6,7 @@ from threading import Thread
 
 from model_buyer.exceptions.exceptions import ModelNotFoundException
 from model_buyer.models.model import Model, BuyerModelStatus
+from model_buyer.services.entities.encrypter_wrapper import EncrypterWrapper
 from model_buyer.services.entities.model_response import ModelResponse, NewModelResponse, NewModelRequestData
 from model_buyer.services.federated_trainer_connector import FederatedTrainerConnector
 from model_buyer.utils.singleton import Singleton
@@ -16,6 +17,7 @@ class ModelBuyerService(metaclass=Singleton):
     def __init__(self):
         self.id = str(uuid.uuid1())
         self.encryption_service = None
+        self.encrypter_wrapper = None
         self.data_loader = None
         self.config = None
         self.predictions = []
@@ -23,6 +25,7 @@ class ModelBuyerService(metaclass=Singleton):
 
     def init(self, encryption_service, data_loader, config):
         self.encryption_service = encryption_service
+        self.encrypter_wrapper = EncrypterWrapper(self.encryption_service)
         self.data_loader = data_loader
         self.config = config
         self.predictions = []
@@ -35,30 +38,6 @@ class ModelBuyerService(metaclass=Singleton):
 
     def delete_model(self, model_id):
         self.get(model_id).delete()
-
-    def _decrypt_number(self, number):
-        if self.config["ACTIVE_ENCRYPTION"]:
-            return self.encryption_service.get_deserialized_desencrypted_value(number)
-        else:
-            return number
-
-    def _decrypt_collection(self, collection):
-        private_key = self.encryption_service.get_private_key()
-        if self.encryption_service.is_active:
-            collection = self.encryption_service.decrypt_and_deserizalize_collection(private_key, collection)
-        return np.asarray(collection)
-
-    def _only_serialize_collection(self, collection):
-        if self.encryption_service.is_active:
-            return self.encryption_service.get_serialized_collection(collection)
-        else:
-            return collection
-
-    def _only_serialize_encrypted_collection(self, collection):
-        if self.encryption_service.is_active:
-            return self.encryption_service.get_serialized_encrypted_collection(collection)
-        else:
-            return collection
 
     def make_new_order_model(self, model_type, name, requirements, user_id):
         """
@@ -84,7 +63,7 @@ class ModelBuyerService(metaclass=Singleton):
         :return:
         """
         request_data = ordered_model.request_data
-        request_data["weights"] = self._only_serialize_encrypted_collection(request_data["weights"])
+        request_data["weights"] = self.encrypter_wrapper.only_serialize_encrypted_collection(request_data["weights"])
         return request_data
 
     def finish_model(self, model_id):
@@ -96,10 +75,10 @@ class ModelBuyerService(metaclass=Singleton):
     def _build_response_with_MSEs(self, model_id, data):
         logging.info("_build_response_with_MSEs")
         logging.info(data)
-        decrypted_MSE = self._decrypt_number(data["mse"])
+        decrypted_MSE = self.encrypter_wrapper.decrypt_number(data["mse"])
         decrypted_partial_MSEs = {}
         for data_owner, partial_mse in data["partial_MSEs"].items():
-            decrypted_partial_MSEs[data_owner] = self._decrypt_number(partial_mse)
+            decrypted_partial_MSEs[data_owner] = self.encrypter_wrapper.decrypt_number(partial_mse)
         public_key = self.encryption_service.get_public_key()
         return model_id, decrypted_MSE, decrypted_partial_MSEs, public_key
 
@@ -118,9 +97,10 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model.status = status
         diffs = data['metrics']['diffs']
         partial_diffs = data['metrics']['partial_diffs']
-        weights = self._decrypt_collection(data["model"]["weights"])
+        weights = self.encrypter_wrapper.decrypt_collection(data["model"]["weights"])
         logging.info("Updating model from fed. aggr. Weights: {}".format(weights))
         np.around(weights, decimals=3, out=weights)
+        #  TODO: Refactor
         if self.encryption_service.is_active:
             weights = self.encryption_service.get_serialized_encrypted_collection(weights)
             diffs = [self.encryption_service.decrypt_and_deserizalize_collection(self.encryption_service.get_private_key(), diff) for diff in diffs]
