@@ -74,7 +74,7 @@ class ModelBuyerService(metaclass=Singleton):
 
         ordered_model = self.get(model_id)
         ordered_model.status = BuyerModelStatus.FINISHED.name
-        logging.info("Model status: {} weights {}".format(ordered_model.status, ordered_model.model.weights))
+        logging.info("Model status: {} ".format(ordered_model.status))
         ordered_model.update()
 
     def _decrypt_mse(self, encrypted_mse):
