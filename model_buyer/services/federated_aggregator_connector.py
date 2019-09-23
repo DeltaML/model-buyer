@@ -34,7 +34,7 @@ class FederatedAggregatorConnector:
                    "partial_MSEs": partial_MSEs,
                    "public_key": public_key
                    }
-        logging.info("url: {} payload {}".format(url, payload))
+        logging.info("url: {} ".format(url))
         response = requests.post(url, json=payload)
-        logging.info("response {}".format(response))
+        logging.info("response {}".format(response.json()))
         return response.json()  # TODO: SHOW RESULT IN SCREEN (IMPROVENT AND CONTRIBUTIONS)

@@ -131,8 +131,8 @@ class ModelBuyerService(metaclass=Singleton):
             model_id, ordered_model.initial_mse, mse, partial_MSEs, self.encryption_service.get_public_key()
         )
         logging.info("CONTRIBUTIONS: {}".format(progress_update))
-        ordered_model.contributions = progress_update[2]
-        ordered_model.improvement = progress_update[1]
+        ordered_model.contributions = progress_update['contributions']
+        ordered_model.improvement = progress_update['improvement']
         ordered_model.iterations += 1
         logging.info("Updating saved model. Weights")
         ordered_model.update()
