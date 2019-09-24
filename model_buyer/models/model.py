@@ -79,13 +79,12 @@ class Model(DbEntity):
         self.model_type = model_type
         # TODO: revisar esto
         self.model = ModelFactory.get_model(model_type)(requirements=requirements)
-        #self.model = _model
         self.model.type = model_type
-        #self.model.set_weights(_model.weights)
         self.status = BuyerModelStatus.INITIATED.name
-        self.iterations = 0
-        self.improvement = 0
         self.name = name
+        self.iterations = 0
+        self.improvement = 0.0
+        self.mse = 0.0
         self.cost = 0.0
         self.mse_history = []
 

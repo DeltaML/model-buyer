@@ -34,6 +34,8 @@ class NewModelResponse:
     def __init__(self, ordered_model):
         self.requirements = ordered_model.request_data
         self.model = {"id": ordered_model.id,
+                      "creation_date": ordered_model.creation_date,
+                      "updated_date": ordered_model.updated_date,
                       "status": ordered_model.status,
                       "type": ordered_model.model_type,
                       "weights": ordered_model.get_weights_as_list()
