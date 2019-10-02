@@ -8,6 +8,7 @@ from model_buyer.exceptions.exceptions import NoResultFoundException, LoginFailu
 from model_buyer.resources.models_resource import api as model_api
 from model_buyer.resources.predictions_resource import api as predictions_api
 from model_buyer.resources.users_resource import api as users_api
+from model_buyer.resources.helpers_resource import api as helpers_api
 
 api = Api(
     title='Model Buyer Api',
@@ -20,6 +21,7 @@ api = Api(
 api.add_namespace(model_api)
 api.add_namespace(predictions_api)
 api.add_namespace(users_api)
+api.add_namespace(helpers_api)
 
 
 @api.errorhandler(ModelErrorException)

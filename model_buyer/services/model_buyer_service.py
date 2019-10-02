@@ -73,6 +73,7 @@ class ModelBuyerService(metaclass=Singleton):
         logging.info("Finish model with status {}".format(BuyerModelStatus.FINISHED.name))
 
         ordered_model = self.get(model_id)
+        ordered_model.set_weights(self._decrypt_model(ordered_model.get_weights()))
         ordered_model.status = BuyerModelStatus.FINISHED.name
         logging.info("Model status: {} ".format(ordered_model.status))
         ordered_model.update()
@@ -202,3 +203,8 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model.status = BuyerModelStatus.ERROR.name
         ordered_model.save()
 
+    def _decrypt_model(self, weights):
+        encrypted_model = self.encryption_service.get_deserialized_collection(weights) if self.config[
+            "ACTIVE_ENCRYPTION"] else weights
+        result = self.encryption_service.decrypt_collection(encrypted_model)
+        return result
