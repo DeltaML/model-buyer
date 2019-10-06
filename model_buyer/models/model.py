@@ -61,6 +61,8 @@ class Model(DbEntity):
     mse = Column(Float)
     initial_mse = Column(Float)
     partial_MSEs = Column(JSON)
+    diffs = Column(JSON)
+    partial_diffs = Column(JSON)
     status = Column(String(50), default=BuyerModelStatus.INITIATED.name)
     improvement = Column(Float)
     cost = Column(Float)
@@ -87,6 +89,8 @@ class Model(DbEntity):
         self.mse = 0.0
         self.cost = 0.0
         self.mse_history = []
+        self.diffs = []
+        self.partial_diffs = {}
 
     def set_weights(self, weights):
         if type(weights) == list:
@@ -120,7 +124,9 @@ class Model(DbEntity):
                        Model.contributions: self.contributions,
                        Model.updated_date: self.updated_date,
                        Model.partial_MSEs: self.partial_MSEs,
-                       Model.mse: self.mse}
+                       Model.mse: self.mse,
+                       Model.diffs: self.diffs,
+                       Model.partial_diffs: self.partial_diffs}
         super(Model, self).update(Model, filters, update_data)
 
     def add_mse(self, mse):
