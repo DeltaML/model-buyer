@@ -137,3 +137,15 @@ class ModelResource(Resource):
     @api.doc('delete_model')
     def delete(self, model_id):
         return ModelBuyerService().delete_model(model_id), 200
+
+
+@api.route('/<model_id>/mse', endpoint='model_ep_mse')
+@api.response(404, 'Model not found')
+@api.param('model_id', 'The model identifier')
+class ModelMetricsResource(Resource):
+
+    @api.doc('patch_model')
+    def patch(self, model_id):
+        data = request.get_json()
+        logging.info("Received final update from fed. aggr")
+        return {'ok': ModelBuyerService().update_metrics(model_id, data)}
