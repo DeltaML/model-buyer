@@ -40,7 +40,7 @@ class ModelBuyerService(metaclass=Singleton):
     def delete_model(self, model_id):
         self.get(model_id).delete()
 
-    def make_new_order_model(self, model_type, name, requirements, user_id):
+    def make_new_order_model(self, model_type, name, requirements, user):
         """
         :param model_type:
         :param name:
@@ -49,10 +49,10 @@ class ModelBuyerService(metaclass=Singleton):
         :return:
         """
         ordered_model = Model(model_type=model_type, name=name, requirements=requirements)
-        # TODO agrojas: validate if user exists
-        ordered_model.user_id = user_id
+
+        ordered_model.user_id = user.delta_id
         # TODO agrojas: extract to commons
-        ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type, self.config['STEP'], self.encryption_service.get_public_key()))
+        ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user, model_type, self.config['STEP'], self.encryption_service.get_public_key()))
         ordered_model.save()
         self.federated_aggregator_connector.send_model_order(self._get_request_data(ordered_model))
         return NewModelResponse(ordered_model)

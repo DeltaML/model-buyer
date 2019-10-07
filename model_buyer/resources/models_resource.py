@@ -4,6 +4,7 @@ from flask import request
 from flask_restplus import Resource, Namespace, fields
 
 from model_buyer.services.model_buyer_service import ModelBuyerService
+from model_buyer.services.user_service import UserService
 
 api = Namespace('models', description='Model related operations')
 
@@ -101,10 +102,10 @@ class ModelResources(Resource):
         logging.info("New order model")
         model_type = request.get_json()["model_type"]
         name = request.get_json()["name"]
-        user_id = request.get_json()["user_id"]
         data_requirements = request.get_json()["data_requirements"]
         payment_requirements = request.form.get("payment_requirements")
-        return ModelBuyerService().make_new_order_model(model_type, name, data_requirements, user_id), 200
+        user = UserService().get(request.get_json()["user_id"])
+        return ModelBuyerService().make_new_order_model(model_type, name, data_requirements, user), 200
 
     @api.marshal_list_with(reduced_ordered_model)
     def get(self):

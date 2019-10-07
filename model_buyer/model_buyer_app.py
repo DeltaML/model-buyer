@@ -11,6 +11,7 @@ from model_buyer.services.data_base import Database
 from model_buyer.services.model_buyer_service import ModelBuyerService
 from model_buyer.resources import api
 from model_buyer.config.logging_config import DEV_LOGGING_CONFIG, PROD_LOGGING_CONFIG
+from model_buyer.services.user_service import UserService
 
 
 def create_app():
@@ -43,6 +44,8 @@ data_base = Database(app.config)
 data_loader = DataLoader(app.config['DATA_SETS_DIR'])
 model_buyer_service = ModelBuyerService()
 model_buyer_service.init(encryption_service, data_loader, app.config)
+user_service = UserService()
+user_service.init(app.config, model_buyer_service)
 
 logging.info("Model Buyer is running")
 
