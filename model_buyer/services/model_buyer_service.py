@@ -9,6 +9,7 @@ from model_buyer.models.model import Model, BuyerModelStatus
 from model_buyer.services.entities.encrypter_wrapper import EncrypterWrapper
 from model_buyer.services.entities.model_response import ModelResponse, NewModelResponse, NewModelRequestData
 from model_buyer.services.federated_aggregator_connector import FederatedAggregatorConnector
+from model_buyer.services.metrics_handler import MetricsHandler
 from model_buyer.utils.singleton import Singleton
 
 
@@ -91,14 +92,43 @@ class ModelBuyerService(metaclass=Singleton):
         public_key = self.encryption_service.get_public_key()
         return model_id, decrypted_MSE, decrypted_partial_MSEs, public_key
 
+    def update_metrics(self, model_id, data):
+        from_fa_mse = data['mse']
+        from_fa_partial_mses = data['partial_mses']
+        noise = data['noise']
+        ordered_model = self.get(model_id)
+        diffs = ordered_model.diffs
+        partial_diffs = ordered_model.partial_diffs
+        metrics_handler = MetricsHandler(np.asarray(noise))
+        p_mses = {key: np.asarray(diffs) for key, diffs in partial_diffs.items()}
+        mse, _, partial_MSEs = metrics_handler.get_mses(np.asarray(diffs), p_mses)
+        if mse != from_fa_mse:
+            return False
+        for data_owner in partial_MSEs:
+            if partial_MSEs[data_owner] != from_fa_partial_mses[data_owner]:
+                return False
+        if data['first_update']:
+            ordered_model.initial_mse = mse
+            logging.info("INITIAL MSE: {}".format(ordered_model.initial_mse))
+        ordered_model.add_mse(mse)
+        ordered_model.partial_MSEs = partial_MSEs
+        progress_update = self.federated_aggregator_connector.send_decrypted_MSEs(
+            model_id, ordered_model.initial_mse, mse, partial_MSEs, self.encryption_service.get_public_key()
+        )
+        logging.info("CONTRIBUTIONS: {}".format(progress_update))
+        ordered_model.contributions = progress_update['contributions']
+        ordered_model.improvement = progress_update['improvement']
+        ordered_model.update()
+        return True
+
     def update_model(self, model_id, data):
         """
         :param model_id:
         :param data:
         :return:
         """
-        ordered_model, diffs = self._update_model(model_id, data, BuyerModelStatus.IN_PROGRESS.name)
-        return NewModelResponse(ordered_model).get_update_response(diffs)
+        ordered_model, diffs, partial_diffs = self._update_model(model_id, data, BuyerModelStatus.IN_PROGRESS.name)
+        return NewModelResponse(ordered_model).get_update_response(diffs, partial_diffs)
 
     def _update_model(self, model_id, data, status):
         ordered_model = self.get(model_id)
@@ -118,26 +148,13 @@ class ModelBuyerService(metaclass=Singleton):
                 partial_diffs[trainer] = [self.encryption_service.decrypt_and_deserizalize_collection(
                     self.encryption_service.get_private_key(), diff) for diff in partial_diffs[trainer]]
 
-        mse = np.mean(np.asarray(diffs) ** 2)
-        partial_MSEs = {}
-        for trainer in partial_diffs:
-            partial_MSEs[trainer] = np.mean(np.asarray(partial_diffs[trainer]) ** 2)
-        if data['first_update']:
-            ordered_model.initial_mse = mse
-            logging.info("INITIAL MSE: {}".format(ordered_model.initial_mse))
-        ordered_model.add_mse(mse)
+        ordered_model.diffs = diffs
+        ordered_model.partial_diffs = partial_diffs
         ordered_model.set_weights(weights)
-        ordered_model.partial_MSEs = partial_MSEs
-        progress_update = self.federated_aggregator_connector.send_decrypted_MSEs(
-            model_id, ordered_model.initial_mse, mse, partial_MSEs, self.encryption_service.get_public_key()
-        )
-        logging.info("CONTRIBUTIONS: {}".format(progress_update))
-        ordered_model.contributions = progress_update['contributions']
-        ordered_model.improvement = progress_update['improvement']
         ordered_model.iterations += 1
         logging.info("Updating saved model. Weights")
         ordered_model.update()
-        return ordered_model, diffs
+        return ordered_model, diffs, partial_diffs
 
     def get(self, model_id):
         model = Model.get(model_id)

@@ -57,11 +57,12 @@ class NewModelResponse:
                         "improvement": ordered_model.improvement,
                         }
 
-    def get_update_response(self, diffs):
+    def get_update_response(self, diffs, partial_diffs):
         return {
             "weights": self.model['weights'],
             "mse": self.metrics['mse'],
-            "diffs": diffs
+            "diffs": diffs,
+            "partial_diffs": partial_diffs
         }
 
 
