@@ -2,6 +2,7 @@ import logging
 import os
 from logging.config import dictConfig
 
+from commons.web3.web3_service import Web3Service
 from flask import Flask
 from flask_cors import CORS
 
@@ -42,8 +43,14 @@ public_key, private_key = encryption_service.generate_key_pair(app.config["KEY_L
 encryption_service.set_public_key(public_key.n)
 data_base = Database(app.config)
 data_loader = DataLoader(app.config['DATA_SETS_DIR'])
+w3_service = Web3Service(app.config["ETH_URL"])
+
 model_buyer_service = ModelBuyerService()
-model_buyer_service.init(encryption_service, data_loader, app.config)
+model_buyer_service.init(encryption_service=encryption_service,
+                         data_loader=data_loader,
+                         w3_service=w3_service,
+                         config=app.config)
+
 user_service = UserService()
 user_service.init(app.config, model_buyer_service)
 

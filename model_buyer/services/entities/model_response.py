@@ -65,6 +65,7 @@ class NewModelRequestData:
         self.weights = ordered_model.get_weights_as_list()
         self.public_key = public_key
         self.step = step
+        self.payments = ordered_model.payments
 
     def get(self):
         return dict(requirements=self.requirements,
@@ -75,4 +76,5 @@ class NewModelRequestData:
                     model_buyer_address=self.model_buyer_address,
                     weights=self.weights,
                     step=self.step,
-                    public_key=self.public_key)
+                    public_key=self.public_key,
+                    payments=self.payments)
