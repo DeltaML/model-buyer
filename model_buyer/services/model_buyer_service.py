@@ -56,7 +56,7 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model = Model(model_type=model_type, name=name, requirements=requirements,
                               payments=payment_requirements)
 
-        ordered_model.user_id = user.delta_id
+        ordered_model.user_id = user.id
         ordered_model.set_request_data(
             NewModelRequestData(ordered_model, requirements, user, model_type, self.config['STEP'],
                                 self.encryption_service.get_public_key()))

@@ -2,10 +2,9 @@ import logging
 
 from commons.utils.singleton import Singleton
 
-from model_buyer.exceptions.exceptions import LoginFailureException, UserNotFoundException, AddressNotFoundException
+from model_buyer.exceptions.exceptions import LoginFailureException, UserNotFoundException
 from model_buyer.models.user import User
 from model_buyer.services.user_login_service import UserLoginService
-
 
 
 class UserService(metaclass=Singleton):

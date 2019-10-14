@@ -105,7 +105,7 @@ class ModelResources(Resource):
         name = request_data["name"]
         data_requirements = request_data["data_requirements"]
         payment_requirements = request_data["payments_requirements"]
-        user = UserService().get_by_delta_id(request_data["user_id"])
+        user = UserService().get(request_data["user_id"])
         return ModelBuyerService().make_new_order_model(model_type=model_type,
                                                         name=name,
                                                         requirements=data_requirements,
