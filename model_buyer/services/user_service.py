@@ -78,3 +78,10 @@ class UserService(metaclass=Singleton):
         """
         user = self.get(user_id)
         return user.update_address(user_id, user_data["address"])
+
+    @staticmethod
+    def get_by_delta_id(delta_id):
+        user = User.find_one_by_id(delta_id)
+        if not user:
+            raise UserNotFoundException(delta_id)
+        return user

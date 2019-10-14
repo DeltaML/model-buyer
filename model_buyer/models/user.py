@@ -44,6 +44,12 @@ class User(DbEntity):
         return DbEntity.find(User, filters)
 
     @classmethod
+    def find_by_delta_id(cls, delta_id):
+        filters = {'delta_id': delta_id}
+        return DbEntity.find(User, filters)
+
+
+    @classmethod
     def find_one_by_email(cls, user_email):
         filters = {'email': user_email}
         return DbEntity.find(User, filters)

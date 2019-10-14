@@ -1,3 +1,4 @@
+import logging
 from commons.web3.delta_contracts import ModelBuyerContract
 
 
@@ -15,6 +16,12 @@ class ContractService:
         """
         return ModelBuyerContract(contract=self.w3_service.build_contract(address=self.contract_address),
                                   address=account)
+
+    def pay_for_model(self, model_buyer_account, model_id, payment_requirements):
+        logging.info("pay_for_model init {} {} ".format(model_buyer_account, model_id))
+        #pay = self.w3_service.transform_to_wei(value=payment_requirements["value"],currency=payment_requirements["unit"])
+        self.build_contract_api(model_buyer_account).pay_for_model(model_id=model_id, pay=5)
+        logging.info("pay_for_model finish")
 
     def finish_model_training(self, model_id, model_buyer_account):
         """
