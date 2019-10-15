@@ -19,8 +19,10 @@ class ContractService:
 
     def pay_for_model(self, model_buyer_account, model_id, payment_requirements):
         logging.info("pay_for_model init {} {} ".format(model_buyer_account, model_id))
-        #pay = self.w3_service.transform_to_wei(value=payment_requirements["value"],currency=payment_requirements["unit"])
-        self.build_contract_api(model_buyer_account).pay_for_model(model_id=model_id, pay=5)
+        pay = self.w3_service.transform_to_wei(value=5, currency='ether')
+        contract = self.build_contract_api(model_buyer_account)
+        contract.set_model_buyer(model_buyer_account)
+        contract.pay_for_model(model_id=model_id, pay=pay)
         logging.info("pay_for_model finish")
 
     def finish_model_training(self, model_id, model_buyer_account):
