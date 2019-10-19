@@ -55,15 +55,17 @@ class NewModelResponse:
 
 class NewModelRequestData:
 
-    def __init__(self, ordered_model, requirements, user_id, model_type, step, public_key):
+    def __init__(self, ordered_model, requirements, user, model_type, step, public_key):
         self.requirements = requirements
         self.status = ordered_model.status
         self.model_id = ordered_model.id
         self.model_type = model_type
-        self.model_buyer_id = user_id
+        self.model_buyer_id = user.delta_id
+        self.model_buyer_address = user.address
         self.weights = ordered_model.get_weights_as_list()
         self.public_key = public_key
         self.step = step
+        self.payments = ordered_model.payments
 
     def get(self):
         return dict(requirements=self.requirements,
@@ -71,6 +73,8 @@ class NewModelRequestData:
                     model_id=self.model_id,
                     model_type=self.model_type,
                     model_buyer_id=self.model_buyer_id,
+                    model_buyer_address=self.model_buyer_address,
                     weights=self.weights,
                     step=self.step,
-                    public_key=self.public_key)
+                    public_key=self.public_key,
+                    payments=self.payments)

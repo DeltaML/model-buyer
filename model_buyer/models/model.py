@@ -72,14 +72,14 @@ class Model(DbEntity):
     mse_history = Column(JSON)
     creation_date = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    payments = Column(JSON)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="models")
     User.models = relationship("Model", back_populates="user")
 
-    def __init__(self, model_type, name="default", requirements=None):
+    def __init__(self, model_type, name="default", requirements=None, payments=None):
         self.id = str(uuid.uuid1())
         self.model_type = model_type
-        # TODO: revisar esto
         self.model = ModelFactory.get_model(model_type)(requirements=requirements)
         self.model.type = model_type
         self.status = BuyerModelStatus.INITIATED.name
@@ -91,6 +91,7 @@ class Model(DbEntity):
         self.mse_history = []
         self.diffs = []
         self.partial_diffs = {}
+        self.payments = payments
 
     def set_weights(self, weights):
         if type(weights) == list:

@@ -14,7 +14,7 @@ class FederatedAggregatorConnector:
         logging.info("url: {} payload {}".format(url, data))
         response = requests.post(url, json=data)
         response.raise_for_status()
-        logging.info("Response {}".format(response.json()))
+        logging.info("Response {}".format(response))
 
     def send_transformed_prediction(self, prediction):
         url = self.federated_aggregator_host + "/prediction"
