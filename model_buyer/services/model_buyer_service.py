@@ -1,15 +1,18 @@
 import logging
 import os
 import uuid
-import numpy as np
 from threading import Thread
+
+import numpy as np
 
 from model_buyer.exceptions.exceptions import ModelNotFoundException
 from model_buyer.models.model import Model, BuyerModelStatus
+from model_buyer.services.contract_service import ContractService
 from model_buyer.services.entities.encrypter_wrapper import EncrypterWrapper
 from model_buyer.services.entities.model_response import ModelResponse, NewModelResponse, NewModelRequestData
 from model_buyer.services.federated_aggregator_connector import FederatedAggregatorConnector
 from model_buyer.services.metrics_handler import MetricsHandler
+from model_buyer.services.user_service import UserService
 from model_buyer.utils.singleton import Singleton
 
 
@@ -18,20 +21,21 @@ class ModelBuyerService(metaclass=Singleton):
     def __init__(self):
         self.id = str(uuid.uuid1())
         self.encryption_service = None
-        self.encrypter_wrapper = None
+        self.encrypted_wrapper = None
+        self.contract_service = None
         self.data_loader = None
         self.config = None
         self.predictions = []
         self.federated_aggregator_connector = None
 
-    def init(self, encryption_service, data_loader, config):
+    def init(self, encryption_service, data_loader, w3_service, config):
         self.encryption_service = encryption_service
-        self.encrypter_wrapper = EncrypterWrapper(self.encryption_service)
+        self.encrypted_wrapper = EncrypterWrapper(self.encryption_service)
         self.data_loader = data_loader
         self.config = config
         self.predictions = []
-        if config:
-            self.federated_aggregator_connector = FederatedAggregatorConnector(config)
+        self.federated_aggregator_connector = FederatedAggregatorConnector(config)
+        self.contract_service = ContractService(w3_service, self.config["CONTRACT_ADDRESS"])
 
     @staticmethod
     def get_all():
@@ -40,21 +44,28 @@ class ModelBuyerService(metaclass=Singleton):
     def delete_model(self, model_id):
         self.get(model_id).delete()
 
-    def make_new_order_model(self, model_type, name, requirements, user_id):
+    def make_new_order_model(self, model_type, name, requirements, user, payment_requirements):
         """
         :param model_type:
         :param name:
         :param requirements:
-        :param user_id:
+        :param user:
+        :param payment_requirements:
         :return:
         """
-        ordered_model = Model(model_type=model_type, name=name, requirements=requirements)
-        # TODO agrojas: validate if user exists
-        ordered_model.user_id = user_id
-        # TODO agrojas: extract to commons
-        ordered_model.set_request_data(NewModelRequestData(ordered_model, requirements, user_id, model_type, self.config['STEP'], self.encryption_service.get_public_key()))
+        ordered_model = Model(model_type=model_type, name=name, requirements=requirements,
+                              payments=payment_requirements)
+
+        ordered_model.user_id = user.id
+        ordered_model.set_request_data(
+            NewModelRequestData(ordered_model, requirements, user, model_type, self.config['STEP'],
+                                self.encryption_service.get_public_key()))
         ordered_model.save()
         self.federated_aggregator_connector.send_model_order(self._get_request_data(ordered_model))
+
+        self.contract_service.pay_for_model(model_buyer_account=user.address,
+                                            model_id=ordered_model.id,
+                                            payment_requirements=payment_requirements["pay_for_model"])
         return NewModelResponse(ordered_model)
 
     def _get_request_data(self, ordered_model):
@@ -64,10 +75,16 @@ class ModelBuyerService(metaclass=Singleton):
         :return:
         """
         request_data = ordered_model.request_data
-        request_data["weights"] = self.encrypter_wrapper.only_serialize_encrypted_collection(request_data["weights"])
+        request_data["weights"] = self.encrypted_wrapper.only_serialize_encrypted_collection(request_data["weights"])
         return request_data
 
     def finish_model(self, model_id, data):
+        """
+        Completion of model training in the model buyer
+        :param model_id:
+        :param data:
+        :return:
+        """
         if data["model"]["status"] == "ERROR":
             self._finish_on_error(model_id)
             return
@@ -78,6 +95,12 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model.status = BuyerModelStatus.FINISHED.name
         logging.info("Model status: {} ".format(ordered_model.status))
         ordered_model.update()
+        self._call_finish_contract(model_id, ordered_model)
+
+    def _call_finish_contract(self, model_id, ordered_model):
+        logging.info("Call finish model training function on smart contract")
+        user = UserService().get(ordered_model.user_id)
+        self.contract_service.finish_model_training(model_id=model_id, model_buyer_account=user.address)
 
     def _decrypt_mse(self, encrypted_mse):
         return self.encryption_service.get_deserialized_desencrypted_value(encrypted_mse) if self.config[
@@ -85,10 +108,10 @@ class ModelBuyerService(metaclass=Singleton):
 
     def _build_response_with_MSEs(self, model_id, data):
         logging.info("_build_response_with_MSEs")
-        decrypted_MSE = self.encrypter_wrapper.decrypt_number(data["mse"])
+        decrypted_MSE = self.encrypted_wrapper.decrypt_number(data["mse"])
         decrypted_partial_MSEs = {}
         for data_owner, partial_mse in data["partial_MSEs"].items():
-            decrypted_partial_MSEs[data_owner] = self.encrypter_wrapper.decrypt_number(partial_mse)
+            decrypted_partial_MSEs[data_owner] = self.encrypted_wrapper.decrypt_number(partial_mse)
         public_key = self.encryption_service.get_public_key()
         return model_id, decrypted_MSE, decrypted_partial_MSEs, public_key
 
@@ -135,7 +158,7 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model.status = status
         diffs = data['metrics']['diffs']
         partial_diffs = data['metrics']['partial_diffs']
-        weights = self.encrypter_wrapper.decrypt_collection(data["model"]["weights"])
+        weights = self.encrypted_wrapper.decrypt_collection(data["model"]["weights"])
         logging.info("Updating model from fed. aggr. ")
         np.around(weights, decimals=3, out=weights)
         #  TODO: Refactor
