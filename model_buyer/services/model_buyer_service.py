@@ -63,9 +63,11 @@ class ModelBuyerService(metaclass=Singleton):
         ordered_model.save()
         self.federated_aggregator_connector.send_model_order(self._get_request_data(ordered_model))
 
+        mock_pay_reqs = {'value': ModelBuyerService().config['PAY'], 'unit': ModelBuyerService().config['UNIT']}
+        pay_reqs = payment_requirements["pay_for_model"] or mock_pay_reqs
         self.contract_service.pay_for_model(model_buyer_account=user.address,
                                             model_id=ordered_model.id,
-                                            payment_requirements=payment_requirements["pay_for_model"])
+                                            payment_requirements=pay_reqs)
         return NewModelResponse(ordered_model)
 
     def _get_request_data(self, ordered_model):

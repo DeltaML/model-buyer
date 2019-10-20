@@ -52,7 +52,9 @@ metrics = api.model(name='Metrics', model={
     'partial_MSEs': fields.List(fields.Nested(contribs), required=True, description='The MSE of models updated without one local trainer each'),
     'iterations': fields.Integer(required=True, description='Number of iterations'),
     'improvement': fields.Fixed(required=True, decimals=5, description='The model improvement'),
-    'mse_history': fields.List(fields.Nested(mse_history), required=True, description='The model mse history list')
+    'mse_history': fields.List(fields.Nested(mse_history), required=True, description='The model mse history list'),
+    'initial_payment': fields.Integer(required=True, description='The initial payment needed for training'),
+    'spent': fields.Fixed(required=True, decimals=3, description='The actual money spent in the training'),
 })
 
 model = api.model(name='Model', model={
@@ -106,7 +108,7 @@ class ModelResources(Resource):
         model_type = request_data["model_type"]
         name = request_data["name"]
         data_requirements = request_data["data_requirements"]
-        payment_requirements = request_data["payments_requirements"] or ModelBuyerService().config['PAY']
+        payment_requirements = request_data["payments_requirements"]
         user = UserService().get(request_data["user_id"])
         return ModelBuyerService().make_new_order_model(model_type=model_type,
                                                         name=name,
