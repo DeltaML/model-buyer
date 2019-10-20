@@ -1,10 +1,22 @@
 class ModelResponse:
 
     @staticmethod
-    def map_partial_mse(partial_mse):
+    def map_partial_mse(partial_mse, contribs, total_spent, improvement):
         if not partial_mse:
             return []
-        return [dict(data_owner=do_id, partial_MSE=p_mse) for do_id, p_mse in partial_mse.items()]
+        # TODO: Update payment hardcoded
+        p_mse_map = []
+        for do_id, p_mse in partial_mse.items():
+            contrib = round(contribs[do_id] * 100.0, 2)
+            payment = round(float(total_spent) * improvement * contribs[do_id], 2)
+            p_mse_r = round(p_mse, 2)
+            p_mse_map.append({
+                'data_owner': do_id,
+                'partial_MSE': p_mse_r,
+                'contributions': contrib,
+                'payment': payment
+            })
+        return p_mse_map
 
     @staticmethod
     def map_weights(weights):
@@ -20,9 +32,10 @@ class ModelResponse:
                       "user_id": model.user_id,
                       "name": model.name}
 
+        total_spent = 500  # TODO: SE CALCULA A PARTIR DEL IMPROVEMENT, TOTAL_SPENT = TOTAL * IMPROVEMENT
         self.metrics = {"mse": model.mse,
                         "improvement": model.improvement,
-                        "partial_MSEs": self.map_partial_mse(model.partial_MSEs),
+                        "partial_MSEs": self.map_partial_mse(model.partial_MSEs, model.contributions, total_spent, model.improvement),
                         "initial_mse": model.initial_mse,
                         'iterations': model.iterations,
                         'mse_history': model.mse_history

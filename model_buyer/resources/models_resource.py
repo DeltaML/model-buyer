@@ -31,10 +31,12 @@ requirements = api.model(name='Requirements', model={
     'data_requirements': fields.Nested(data_requirements, required=True, description='Data requirements')
 })
 
-partial_MSE = api.model(name='Partial MSE Metrics', model={
+contribs = api.model(name='Partial MSE Metrics', model={
     'data_owner': fields.String(required=True,
                                 description='The data owner removed from the training of this model to obtain the partial MSE'),
     'partial_MSE': fields.Float(required=True, description='The MSE of model updated without the data owner'),
+    'payment': fields.Float(required=True, description="The payment for each data owner"),
+    'contributions': fields.Float(required=True, description="Wich percentage of the total of work was done by each data oner")
 })
 
 
@@ -47,7 +49,7 @@ mse_history = api.model(name='MSE History', model={
 metrics = api.model(name='Metrics', model={
     'initial_mse': fields.Float(required=True, description='The Initial MSE of the model'),
     'mse': fields.Float(required=True, description='The MSE of the model'),
-    'partial_MSEs': fields.List(fields.Nested(partial_MSE), required=True, description='The MSE of models updated without one local trainer each'),
+    'partial_MSEs': fields.List(fields.Nested(contribs), required=True, description='The MSE of models updated without one local trainer each'),
     'iterations': fields.Integer(required=True, description='Number of iterations'),
     'improvement': fields.Fixed(required=True, decimals=5, description='The model improvement'),
     'mse_history': fields.List(fields.Nested(mse_history), required=True, description='The model mse history list')
