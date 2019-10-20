@@ -1,14 +1,14 @@
 class ModelResponse:
 
     @staticmethod
-    def map_partial_mse(partial_mse, contribs, total_spent, improvement):
+    def map_partial_mse(partial_mse, contribs, trainers_total_pay):
         if not partial_mse:
             return []
         # TODO: Update payment hardcoded
         p_mse_map = []
         for do_id, p_mse in partial_mse.items():
             contrib = round(contribs[do_id] * 100.0, 2)
-            payment = round(total_spent * 0.7 * contribs[do_id], 3)
+            payment = round(trainers_total_pay * contribs[do_id], 3)
             p_mse_r = round(p_mse, 2)
             p_mse_map.append({
                 'data_owner': do_id,
@@ -31,11 +31,14 @@ class ModelResponse:
                       "updated_date": model.updated_date,
                       "user_id": model.user_id,
                       "name": model.name}
-        inital_payment = int(model.payments["pay_for_model"]['value'])
-        total_spent = round(inital_payment * model.improvement, 3)
+        inital_payment = round(model.payments["pay_for_model"]['value'], 1)
+        trainers_pay = inital_payment * model.improvement * 0.7
+        validators_pay = inital_payment * 0.2
+        fed_agg_pay = inital_payment * 0.1
+        total_spent = round(trainers_pay + validators_pay + fed_agg_pay, 3)
         self.metrics = {"mse": model.mse,
                         "improvement": model.improvement,
-                        "partial_MSEs": self.map_partial_mse(model.partial_MSEs, model.contributions, total_spent, model.improvement),
+                        "partial_MSEs": self.map_partial_mse(model.partial_MSEs, model.contributions, trainers_pay),
                         "initial_mse": model.initial_mse,
                         'iterations': model.iterations,
                         'mse_history': model.mse_history,
