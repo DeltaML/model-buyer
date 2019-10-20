@@ -106,7 +106,7 @@ class ModelResources(Resource):
         model_type = request_data["model_type"]
         name = request_data["name"]
         data_requirements = request_data["data_requirements"]
-        payment_requirements = request_data["payments_requirements"]
+        payment_requirements = request_data["payments_requirements"] or ModelBuyerService().config['PAY']
         user = UserService().get(request_data["user_id"])
         return ModelBuyerService().make_new_order_model(model_type=model_type,
                                                         name=name,

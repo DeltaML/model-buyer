@@ -8,7 +8,7 @@ class ModelResponse:
         p_mse_map = []
         for do_id, p_mse in partial_mse.items():
             contrib = round(contribs[do_id] * 100.0, 2)
-            payment = round(float(total_spent) * improvement * contribs[do_id], 2)
+            payment = round(int(total_spent * improvement) * contribs[do_id], 3)
             p_mse_r = round(p_mse, 2)
             p_mse_map.append({
                 'data_owner': do_id,
@@ -32,13 +32,14 @@ class ModelResponse:
                       "user_id": model.user_id,
                       "name": model.name}
 
-        total_spent = 500  # TODO: SE CALCULA A PARTIR DEL IMPROVEMENT, TOTAL_SPENT = TOTAL * IMPROVEMENT
         self.metrics = {"mse": model.mse,
                         "improvement": model.improvement,
-                        "partial_MSEs": self.map_partial_mse(model.partial_MSEs, model.contributions, total_spent, model.improvement),
+                        "partial_MSEs": self.map_partial_mse(model.partial_MSEs, model.contributions, model.payments, model.improvement),
                         "initial_mse": model.initial_mse,
                         'iterations': model.iterations,
-                        'mse_history': model.mse_history
+                        'mse_history': model.mse_history,
+                        'initial_payment': model.payments,
+                        'spent': round(model.payments * model.improvement, 3)
                         }
 
 
