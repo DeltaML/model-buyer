@@ -52,7 +52,9 @@ metrics = api.model(name='Metrics', model={
     'partial_MSEs': fields.List(fields.Nested(contribs), required=True, description='The MSE of models updated without one local trainer each'),
     'iterations': fields.Integer(required=True, description='Number of iterations'),
     'improvement': fields.Fixed(required=True, decimals=5, description='The model improvement'),
-    'mse_history': fields.List(fields.Nested(mse_history), required=True, description='The model mse history list')
+    'mse_history': fields.List(fields.Nested(mse_history), required=True, description='The model mse history list'),
+    'initial_payment': fields.Fixed(required=True, decimals=1, description='The initial payment needed for training'),
+    'spent': fields.Fixed(required=True, decimals=2, description='The actual money spent in the training'),
 })
 
 model = api.model(name='Model', model={
