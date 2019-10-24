@@ -28,14 +28,14 @@ class ModelBuyerService(metaclass=Singleton):
         self.predictions = []
         self.federated_aggregator_connector = None
 
-    def init(self, encryption_service, data_loader, w3_service, config):
+    def init(self, encryption_service, data_loader, contract_service, config):
         self.encryption_service = encryption_service
         self.encrypted_wrapper = EncrypterWrapper(self.encryption_service)
         self.data_loader = data_loader
         self.config = config
         self.predictions = []
         self.federated_aggregator_connector = FederatedAggregatorConnector(config)
-        self.contract_service = ContractService(w3_service, self.config["CONTRACT_ADDRESS"])
+        self.contract_service = contract_service
 
     @staticmethod
     def get_all():

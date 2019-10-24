@@ -8,6 +8,8 @@ from flask_cors import CORS
 
 from commons.data.data_loader import DataLoader
 from commons.encryption.encryption_service import EncryptionService
+
+from model_buyer.services.contract_service import ContractService
 from model_buyer.services.data_base import Database
 from model_buyer.services.model_buyer_service import ModelBuyerService
 from model_buyer.resources import api
@@ -43,12 +45,15 @@ public_key, private_key = encryption_service.generate_key_pair(app.config["KEY_L
 encryption_service.set_public_key(public_key.n)
 data_base = Database(app.config)
 data_loader = DataLoader(app.config['DATA_SETS_DIR'])
-w3_service = Web3Service(app.config["ETH_URL"])
+
+contract_service = ContractService()
+contract_service.init(app.config)
+
 
 model_buyer_service = ModelBuyerService()
 model_buyer_service.init(encryption_service=encryption_service,
                          data_loader=data_loader,
-                         w3_service=w3_service,
+                         contract_service=contract_service,
                          config=app.config)
 
 user_service = UserService()

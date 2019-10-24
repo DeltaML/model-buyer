@@ -1,12 +1,27 @@
 import logging
 from commons.web3.delta_contracts import ModelBuyerContract
+from commons.web3.web3_service import Web3Service
+
+from model_buyer.utils.singleton import Singleton
 
 
-class ContractService:
+class ContractService(metaclass=Singleton):
 
-    def __init__(self, w3_service, contract_address):
-        self.w3_service = w3_service
-        self.contract_address = contract_address
+    def __init__(self):
+        self.w3_service = None
+        self.default_contract_address = None
+        self.contract_address = None
+
+    def init(self, config):
+        self.w3_service = Web3Service(config["ETH_URL"])
+        self.default_contract_address = config["CONTRACT_ADDRESS"]
+        self.contract_address = self.default_contract_address
+
+    def set_contract_address(self, address):
+        self.contract_address = address
+
+    def get_contract_data(self):
+        return {'address': self.contract_address}
 
     def build_contract_api(self, account):
         """
