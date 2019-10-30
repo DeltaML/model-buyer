@@ -182,7 +182,7 @@ class ModelBuyerService(metaclass=Singleton):
         return ordered_model, diffs, partial_diffs
 
     def get(self, model_id):
-        model = Model.get(model_id)
+        model = Model.get(model_id=model_id)
         if not model:
             raise ModelNotFoundException
         return model
