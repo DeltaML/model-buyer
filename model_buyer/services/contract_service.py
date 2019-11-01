@@ -2,7 +2,7 @@ import logging
 from commons.web3.delta_contracts import ModelBuyerContract
 from commons.web3.web3_service import Web3Service
 
-from model_buyer.utils.singleton import Singleton
+from commons.utils.singleton import Singleton
 
 
 class ContractService(metaclass=Singleton):
