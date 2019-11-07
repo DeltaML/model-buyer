@@ -71,7 +71,7 @@ class Model(DbEntity):
     iterations = Column(Integer)
     mse_history = Column(JSON)
     creation_date = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_date = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     payments = Column(JSON)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="models")
