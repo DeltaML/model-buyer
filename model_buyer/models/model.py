@@ -115,7 +115,9 @@ class Model(DbEntity):
     @classmethod
     def get(cls, model_id=None):
         filters = {'id': model_id} if model_id else None
-        return DbEntity.find(Model, filters)
+        model = DbEntity.find(Model, filters)
+        model.update_cost()
+        return model
 
     def update(self):
         filters = {'id': self.id}
@@ -129,6 +131,15 @@ class Model(DbEntity):
                        Model.diffs: self.diffs,
                        Model.partial_diffs: self.partial_diffs}
         super(Model, self).update(Model, filters, update_data)
+
+    def update_cost(self):
+        inital_payment = round(self.payments["pay_for_model"]['value'], 1)
+        trainers_pay = inital_payment * self.improvement * 0.7
+        validators_pay = inital_payment * 0.2
+        fed_agg_pay = inital_payment * 0.1
+        total_spent = round(trainers_pay + validators_pay + fed_agg_pay, 3)
+        self.cost = total_spent
+        self.update()
 
     def add_mse(self, mse):
         self.mse = mse
