@@ -22,6 +22,11 @@ class BuyerModelStatus(Enum):
     ERROR = 4
 
 
+PROPORTION_FOR_TRAINERS = 0.7
+PROPORTION_FOR_VALIDATORS = 0.2
+PROPORTION_FOR_FED_AGGR = 0.1
+
+
 class ModelColumn(types.UserDefinedType):
 
     def get_col_spec(self, **kw):
@@ -134,9 +139,9 @@ class Model(DbEntity):
 
     def update_cost(self):
         inital_payment = round(self.payments["pay_for_model"]['value'], 1)
-        trainers_pay = inital_payment * self.improvement * 0.7
-        validators_pay = inital_payment * 0.2
-        fed_agg_pay = inital_payment * 0.1
+        trainers_pay = inital_payment * self.improvement * PROPORTION_FOR_TRAINERS
+        validators_pay = inital_payment * PROPORTION_FOR_VALIDATORS
+        fed_agg_pay = inital_payment * PROPORTION_FOR_FED_AGGR
         total_spent = round(trainers_pay + validators_pay + fed_agg_pay, 3)
         self.cost = total_spent
         self.update()
