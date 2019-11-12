@@ -16,7 +16,9 @@ class Database:
         DbEntity.data_base = self
 
     def get_session(self):
-        return sessionmaker(bind=self.engine)()
+        session = sessionmaker(bind=self.engine)()
+        session.expire_on_commit = False
+        return session
 
     def rollback(self):
         self.get_session().rollback()
