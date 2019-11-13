@@ -121,7 +121,10 @@ class Model(DbEntity):
     def get(cls, model_id=None):
         filters = {'id': model_id} if model_id else None
         model = DbEntity.find(Model, filters)
-        model.update_cost()
+        if type(model) == list:
+            [unitModel.update_cost() for unitModel in model]
+        elif model:
+            model.update_cost()
         return model
 
     def update(self):
